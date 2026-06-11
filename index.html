@@ -1,0 +1,2945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paul's Moodle Assignment Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400&display=swap');
+
+  :root {
+    --ink: #1a1a2e;
+    --parchment: #f7f4ee;
+    --gold: #b8860b;
+    --gold-light: #f0d060;
+    --teal: #2a7c6f;
+    --teal-light: #e6f4f1;
+    --red: #8b1a1a;
+    --red-light: #fdf0f0;
+    --border: #ddd8cc;
+    --muted: #888070;
+    --white: #ffffff;
+    --sidebar-w: 260px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    display: flex;
+    font-size: 14px;
+  }
+
+  /* SIDEBAR */
+  #sidebar {
+    width: var(--sidebar-w);
+    background: var(--ink);
+    color: var(--white);
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    overflow-y: auto;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 16px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .sidebar-logo h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 15px;
+    line-height: 1.4;
+    color: var(--gold-light);
+  }
+
+  .sidebar-logo p {
+    font-size: 11px;
+    color: rgba(255,255,255,0.4);
+    margin-top: 4px;
+  }
+
+  .sidebar-section {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  .sidebar-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    padding: 0 20px 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 20px;
+    cursor: pointer;
+    font-size: 13px;
+    color: rgba(255,255,255,0.7);
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+  .nav-item.active { background: rgba(184,134,11,0.15); color: var(--gold-light); border-left-color: var(--gold); }
+  .nav-item .icon { font-size: 15px; width: 20px; text-align: center; }
+
+  .subject-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    cursor: pointer;
+    font-size: 12px;
+    color: rgba(255,255,255,0.6);
+    transition: all 0.15s;
+    border-left: 3px solid transparent;
+  }
+
+  .subject-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+  .subject-item.active { background: rgba(42,124,111,0.2); color: #7dd3c8; border-left-color: var(--teal); }
+  .subject-item .subject-name { flex: 1; }
+  .subject-item .badge { font-size: 10px; background: rgba(255,255,255,0.1); padding: 2px 6px; border-radius: 10px; }
+
+  .add-subject-btn {
+    margin: 10px 20px;
+    padding: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px dashed rgba(255,255,255,0.2);
+    color: rgba(255,255,255,0.5);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    text-align: center;
+    transition: all 0.15s;
+  }
+
+  .add-subject-btn:hover { background: rgba(255,255,255,0.1); color: var(--white); }
+
+  /* MAIN */
+  #main {
+    margin-left: var(--sidebar-w);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+    padding: 0 32px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .topbar-title { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--ink); }
+  .topbar-subject { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .topbar-actions { display: flex; gap: 10px; align-items: center; }
+
+  .btn {
+    padding: 7px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .btn-primary { background: var(--teal); color: var(--white); }
+  .btn-primary:hover { background: #1f5c52; }
+  .btn-secondary { background: var(--white); color: var(--ink); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--parchment); }
+  .btn-gold { background: var(--gold); color: var(--white); }
+  .btn-gold:hover { background: #8b6508; }
+  .btn-danger { background: var(--red); color: var(--white); }
+  .btn-danger:hover { background: #6b1414; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* CONTENT AREA */
+  .content { padding: 32px; flex: 1; }
+
+  /* TABS */
+  .week-tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    background: var(--white);
+    padding: 4px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .week-tab {
+    padding: 8px 18px;
+    border-radius: 7px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    transition: all 0.15s;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .week-tab:hover { background: var(--parchment); color: var(--ink); }
+  .week-tab.active { background: var(--teal); color: var(--white); }
+
+  /* ASSIGNMENT TABS */
+  .assignment-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 24px;
+    border-bottom: 2px solid var(--border);
+  }
+
+  .assignment-tab {
+    padding: 10px 24px;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    transition: all 0.15s;
+    background: none;
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .assignment-tab:hover { color: var(--ink); }
+  .assignment-tab.active { color: var(--teal); border-bottom-color: var(--teal); }
+
+  /* CARDS */
+  .card {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+
+  .card-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card-title .tag {
+    font-family: 'Inter', sans-serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: var(--teal-light);
+    color: var(--teal);
+  }
+
+  /* FORM ELEMENTS */
+  label { font-size: 12px; font-weight: 600; color: var(--muted); display: block; margin-bottom: 6px; letter-spacing: 0.5px; text-transform: uppercase; }
+
+  textarea, input[type="text"], input[type="password"], input[type="number"], select {
+    width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    font-size: 13px;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: var(--parchment);
+    transition: border-color 0.15s;
+    resize: vertical;
+  }
+
+  textarea:focus, input:focus, select:focus {
+    outline: none;
+    border-color: var(--teal);
+    background: var(--white);
+  }
+
+  .form-group { margin-bottom: 16px; }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  /* GENERATED OUTPUT */
+  .output-box {
+    background: var(--parchment);
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    padding: 20px;
+    font-size: 13px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    min-height: 100px;
+    font-family: 'Inter', sans-serif;
+  }
+
+  .output-box.empty { color: var(--muted); font-style: italic; }
+
+  .output-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* LOADING */
+  .loading-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--teal), var(--gold), var(--teal));
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 3px;
+    margin-bottom: 12px;
+    display: none;
+  }
+
+  .loading-bar.active { display: block; }
+
+  @keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.8s linear infinite; vertical-align: middle; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* PAGES */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* SEARCH */
+  .search-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+
+  .search-bar input { flex: 1; }
+
+  .search-result {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .search-result:hover { border-color: var(--teal); }
+  .search-result .result-meta { font-size: 11px; color: var(--muted); margin-bottom: 6px; }
+  .search-result .result-title { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .search-result .result-excerpt { font-size: 12px; color: #555; line-height: 1.6; }
+  .search-result mark { background: var(--gold-light); padding: 1px 2px; border-radius: 2px; }
+
+  /* LOG */
+  .log-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+
+  .log-item:hover { border-color: var(--teal); background: var(--teal-light); }
+  .log-item .log-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+  .log-item .log-title { font-weight: 600; font-size: 13px; }
+  .log-item .log-type { font-size: 11px; padding: 3px 10px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+  .log-item .log-type.video { background: #fef3c7; color: #92400e; }
+  .log-item .log-type.discussion { background: var(--teal-light); color: var(--teal); }
+  .log-item .log-type.research { background: var(--red-light); color: var(--red); }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--white);
+    border-radius: 12px;
+    padding: 28px;
+    width: 100%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .modal-title { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 20px; }
+  .modal-close { position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); }
+
+  /* ALERTS */
+  .alert { padding: 12px 16px; border-radius: 7px; font-size: 13px; margin-bottom: 16px; }
+  .alert-info { background: var(--teal-light); color: var(--teal); border: 1px solid #b2ddd7; }
+  .alert-warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .alert-error { background: var(--red-light); color: var(--red); border: 1px solid #fca5a5; }
+
+  /* PDF READING SECTION */
+  .pdf-list { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .pdf-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; background: var(--parchment); border: 1px solid var(--border); border-radius: 6px; }
+
+  /* ACCORDION */
+  .accordion { border: 1px solid var(--border); border-radius: 10px; margin-bottom: 20px; overflow: hidden; background: var(--white); }
+  .accordion-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 20px; cursor: pointer; background: var(--white); user-select: none; }
+  .accordion-header:hover { background: var(--parchment); }
+  .accordion-title { font-family: 'Playfair Display', serif; font-size: 15px; color: var(--ink); display: flex; align-items: center; gap: 10px; }
+  .accordion-title .tag { font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; padding: 3px 8px; border-radius: 4px; background: var(--teal-light); color: var(--teal); }
+  .accordion-toggle { width: 24px; height: 24px; border-radius: 50%; background: var(--parchment); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 14px; color: var(--muted); flex-shrink: 0; transition: all 0.2s; }
+  .accordion-toggle.open { background: var(--teal); color: white; border-color: var(--teal); }
+  .accordion-body { padding: 0 20px 20px; display: none; }
+  .accordion-body.open { display: block; }
+  .accordion.always-open .accordion-body { display: block; }
+  .pdf-item .pdf-name { font-size: 13px; font-weight: 500; }
+  .pdf-item .pdf-status { font-size: 11px; color: var(--muted); }
+  .pdf-item .pdf-status.done { color: var(--teal); font-weight: 600; }
+
+  /* VIDEO TRANSCRIPTS */
+  .transcript-slots { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+  .transcript-slot { border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .transcript-slot-header { padding: 10px 14px; background: var(--parchment); display: flex; align-items: center; justify-content: space-between; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .transcript-slot-body { padding: 14px; display: none; }
+  .transcript-slot-body.open { display: block; }
+
+  /* WORD COUNT */
+  .word-count { font-size: 11px; color: var(--muted); text-align: right; margin-top: 4px; }
+  .word-count.over { color: var(--red); font-weight: 600; }
+  .word-count.ok { color: var(--teal); font-weight: 600; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+  /* STAT CARDS */
+  .stat-card { background: var(--white); border: 1px solid var(--border); border-radius: 10px; padding: 20px; text-align: center; }
+  .stat-card .stat-num { font-family: 'Playfair Display', serif; font-size: 36px; color: var(--teal); }
+  .stat-card .stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; }
+
+  /* CONFIG */
+  .config-section { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .config-section:last-child { border-bottom: none; }
+  .config-title { font-family: 'Playfair Display', serif; font-size: 15px; margin-bottom: 16px; color: var(--ink); }
+
+  /* SUMMARY BOX */
+  .summary-box { background: var(--teal-light); border: 1px solid #b2ddd7; border-radius: 8px; padding: 16px; font-size: 13px; line-height: 1.7; margin-top: 12px; }
+
+  /* EMPTY STATE */
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; }
+  .empty-state h3 { font-family: 'Playfair Display', serif; font-size: 18px; color: var(--ink); margin-bottom: 8px; }
+  .empty-state p { font-size: 13px; }
+
+  /* DIVIDER */
+  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* RESPONSIVE */
+  @media (max-width: 900px) {
+    #sidebar { width: 200px; }
+    #main { margin-left: 200px; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <h1>Paul's Moodle<br>Assignment Dashboard</h1>
+    <p>COTS IPC Kerala — M.Div</p>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="nav-item active" onclick="showPage('dashboard')">
+      <span class="icon">🏠</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('search')">
+      <span class="icon">🔍</span> Search Notes
+    </div>
+    <div class="nav-item" onclick="showPage('log')">
+      <span class="icon">📋</span> Assignment Log
+    </div>
+    <div class="nav-item" onclick="showPage('config')">
+      <span class="icon">⚙️</span> Settings
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Subjects</div>
+    <div id="subject-list"></div>
+    <div class="add-subject-btn" onclick="openAddSubject()">+ Add Subject</div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div id="main">
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+      <div class="topbar-subject" id="topbar-subject">Welcome, Paul</div>
+    </div>
+    <div class="topbar-actions">
+      <span id="proxy-status" style="font-size:11px;padding:4px 10px;border-radius:10px;background:#f0f0f0;color:var(--muted);">⚪ Proxy</span>
+      <button class="btn btn-secondary btn-sm" onclick="showPage('log')">📋 View Log</button>
+      <button class="btn btn-primary btn-sm" onclick="showPage('config')">⚙️ Settings</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD HOME -->
+    <div id="page-dashboard" class="page active">
+      <div class="grid-3" id="stats-row" style="margin-bottom:24px;"></div>
+      <div class="card">
+        <div class="card-title">📖 Select a Subject to Begin</div>
+        <p style="color:var(--muted);font-size:13px;line-height:1.7;">Choose a subject from the sidebar or add a new one. Each subject has its own weeks, video reflections, reading assignments, and research papers — all saved and searchable.</p>
+      </div>
+      <div id="recent-log-home"></div>
+    </div>
+
+    <!-- SUBJECT WORKSPACE -->
+    <div id="page-subject" class="page">
+      <div class="week-tabs" id="week-tabs-container"></div>
+      <div class="assignment-tabs">
+        <button class="assignment-tab active" onclick="switchAssignTab('video', this)">🎬 Video Reflection</button>
+        <button class="assignment-tab" onclick="switchAssignTab('discussion', this)">💬 Discussion Group</button>
+        <button class="assignment-tab" onclick="switchAssignTab('research', this)">📄 Research Paper</button>
+      </div>
+
+      <!-- VIDEO TAB -->
+      <div id="assign-tab-video">
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('video-input-acc')">
+            <div class="accordion-title">🎬 Video Question & Transcripts <span class="tag">Input</span></div>
+            <div class="accordion-toggle open" id="video-input-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="video-input-acc-body">
+            <div class="form-group">
+              <label>Reflective Question from Video</label>
+              <textarea id="video-question" rows="3" placeholder="Paste the question from the end of the video lecture here..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Number of Videos This Week</label>
+              <select id="video-count" onchange="renderTranscriptSlots()">
+                <option value="2">2 Videos</option>
+                <option value="3">3 Videos</option>
+                <option value="4">4 Videos</option>
+                <option value="5">5 Videos</option>
+                <option value="6">6 Videos</option>
+                <option value="7">7 Videos</option>
+                <option value="8">8 Videos</option>
+                <option value="9">9 Videos</option>
+                <option value="10">10 Videos</option>
+              </select>
+            </div>
+            <div id="transcript-slots" class="transcript-slots"></div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('video-gen-acc')">
+            <div class="accordion-title">✨ Generate & Humanize <span class="tag">300–500 words</span></div>
+            <div class="accordion-toggle open" id="video-gen-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="video-gen-acc-body">
+            <div class="loading-bar" id="video-loading"></div>
+            <button class="btn btn-gold" onclick="generateVideoReflection()" id="video-gen-btn">✨ Generate & Humanize</button>
+            <div style="margin-top:20px;">
+              <label>Generated & Humanized Assignment</label>
+              <div class="output-box empty" id="video-output">Your humanized assignment will appear here...</div>
+              <div class="word-count" id="video-wordcount"></div>
+            </div>
+            <div class="output-actions" id="video-actions" style="display:none;">
+              <button class="btn btn-primary btn-sm" onclick="downloadOutput('video','docx')">📄 Download Word</button>
+              <button class="btn btn-secondary btn-sm" onclick="downloadOutput('video','txt')">📝 Text</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyOutput('video')">📋 Copy</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveToLog('video')">💾 Save</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('video-final-acc')">
+            <div class="accordion-title">📌 Paste Humanized Final Version <span class="tag">Optional override</span></div>
+            <div class="accordion-toggle" id="video-final-acc-toggle">+</div>
+          </div>
+          <div class="accordion-body" id="video-final-acc-body">
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">If you ran through undetectable.ai manually, paste the final version here. This overrides the generated version in the Word export.</p>
+            <textarea id="video-humanized" rows="6" placeholder="Paste your manually humanized final version here (optional)..."></textarea>
+            <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveHumanized('video')">💾 Save Final Version</button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DISCUSSION TAB -->
+      <div id="assign-tab-discussion" style="display:none;">
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('pdf-upload-acc')">
+            <div class="accordion-title">📚 Upload Reading PDFs <span class="tag">Readings</span></div>
+            <div class="accordion-toggle open" id="pdf-upload-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="pdf-upload-acc-body">
+            <p style="font-size:12px;color:var(--muted);margin-bottom:12px;">Upload PDF resources from Moodle. Summarize once — saved permanently, no tokens needed to view again.</p>
+            <input type="file" id="pdf-upload" multiple accept=".pdf,.txt" style="display:none;" onchange="handlePDFUpload(event)">
+            <button class="btn btn-secondary" onclick="document.getElementById('pdf-upload').click()">📎 Upload PDFs</button>
+            <div id="pdf-list" class="pdf-list"></div>
+            <div id="pdf-summaries"></div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('gd1-acc')">
+            <div class="accordion-title">💬 Entry 1 — Direct Answer <span class="tag">100–200 words</span></div>
+            <div class="accordion-toggle open" id="gd1-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="gd1-acc-body">
+            <div class="form-group">
+              <label>Discussion Question</label>
+              <textarea id="gd-question" rows="3" placeholder="Paste the group discussion question here..."></textarea>
+            </div>
+            <div class="loading-bar" id="gd1-loading"></div>
+            <button class="btn btn-gold" onclick="generateGD(1)" id="gd1-gen-btn">✨ Generate & Humanize</button>
+            <div style="margin-top:16px;">
+              <label>Generated & Humanized Answer</label>
+              <div class="output-box empty" id="gd1-output">Your direct answer will appear here...</div>
+              <div class="word-count" id="gd1-wordcount"></div>
+            </div>
+            <div class="output-actions" id="gd1-actions" style="display:none;">
+              <button class="btn btn-primary btn-sm" onclick="downloadOutput('gd1','docx')">📄 Word</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyOutput('gd1')">📋 Copy</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveToLog('gd1')">💾 Save</button>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <label>📌 Paste Humanized Final Version (optional override)</label>
+              <textarea id="gd1-humanized" rows="3" placeholder="Paste manually humanized version here if needed..."></textarea>
+              <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveHumanized('gd1')">💾 Save Final</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('gd2-acc')">
+            <div class="accordion-title">💬 Entry 2 — Response to Classmate 1 <span class="tag">75–150 words</span></div>
+            <div class="accordion-toggle" id="gd2-acc-toggle">+</div>
+          </div>
+          <div class="accordion-body" id="gd2-acc-body">
+            <div class="form-group">
+              <label>Classmate 1's Response</label>
+              <textarea id="gd2-input" rows="5" placeholder="Paste your first classmate's discussion entry here..."></textarea>
+            </div>
+            <div class="loading-bar" id="gd2-loading"></div>
+            <button class="btn btn-gold" onclick="generateGD(2)" id="gd2-gen-btn">✨ Generate & Humanize</button>
+            <div style="margin-top:16px;">
+              <label>Generated & Humanized Response</label>
+              <div class="output-box empty" id="gd2-output">Your response will appear here...</div>
+              <div class="word-count" id="gd2-wordcount"></div>
+            </div>
+            <div class="output-actions" id="gd2-actions" style="display:none;">
+              <button class="btn btn-primary btn-sm" onclick="downloadOutput('gd2','docx')">📄 Word</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyOutput('gd2')">📋 Copy</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveToLog('gd2')">💾 Save</button>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <label>📌 Paste Humanized Final Version (optional override)</label>
+              <textarea id="gd2-humanized" rows="3" placeholder="Paste manually humanized version here if needed..."></textarea>
+              <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveHumanized('gd2')">💾 Save Final</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('gd3-acc')">
+            <div class="accordion-title">💬 Entry 3 — Response to Classmate 2 <span class="tag">75–150 words</span></div>
+            <div class="accordion-toggle" id="gd3-acc-toggle">+</div>
+          </div>
+          <div class="accordion-body" id="gd3-acc-body">
+            <div class="form-group">
+              <label>Classmate 2's Response</label>
+              <textarea id="gd3-input" rows="5" placeholder="Paste your second classmate's discussion entry here..."></textarea>
+            </div>
+            <div class="loading-bar" id="gd3-loading"></div>
+            <button class="btn btn-gold" onclick="generateGD(3)" id="gd3-gen-btn">✨ Generate & Humanize</button>
+            <div style="margin-top:16px;">
+              <label>Generated & Humanized Response</label>
+              <div class="output-box empty" id="gd3-output">Your response will appear here...</div>
+              <div class="word-count" id="gd3-wordcount"></div>
+            </div>
+            <div class="output-actions" id="gd3-actions" style="display:none;">
+              <button class="btn btn-primary btn-sm" onclick="downloadOutput('gd3','docx')">📄 Word</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyOutput('gd3')">📋 Copy</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveToLog('gd3')">💾 Save</button>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <label>📌 Paste Humanized Final Version (optional override)</label>
+              <textarea id="gd3-humanized" rows="3" placeholder="Paste manually humanized version here if needed..."></textarea>
+              <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveHumanized('gd3')">💾 Save Final</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RESEARCH TAB -->
+      <div id="assign-tab-research" style="display:none;">
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('res-input-acc')">
+            <div class="accordion-title">📄 Research Paper Requirements <span class="tag">Input</span></div>
+            <div class="accordion-toggle open" id="res-input-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="res-input-acc-body">
+            <div class="form-group">
+              <label>Research Paper Question & Requirements</label>
+              <textarea id="research-question" rows="6" placeholder="Paste the full research paper question and requirements here..."></textarea>
+            </div>
+            <div class="form-group">
+              <label>Upload Curated Book List (for this subject)</label>
+              <input type="file" id="curated-books-upload" accept=".txt,.pdf,.docx" style="display:none;" onchange="handleCuratedBooks(event)">
+              <button class="btn btn-secondary btn-sm" onclick="document.getElementById('curated-books-upload').click()">📚 Upload Book List</button>
+              <span id="curated-books-status" style="font-size:12px;color:var(--muted);margin-left:10px;"></span>
+            </div>
+            <div class="form-group">
+              <label>Additional Context / Lecture Notes</label>
+              <textarea id="research-context" rows="4" placeholder="Paste any additional lecture notes, video transcripts, or reading summaries relevant to this paper..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('outline-acc')">
+            <div class="accordion-title">📝 Step 1 — Generate Outline <span class="tag">First</span></div>
+            <div class="accordion-toggle open" id="outline-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="outline-acc-body">
+            <div class="loading-bar" id="outline-loading"></div>
+            <button class="btn btn-secondary" onclick="generateOutline()" id="outline-gen-btn">📝 Generate Outline</button>
+            <div style="margin-top:16px;">
+              <label>Outline (Edit before generating full paper)</label>
+              <textarea id="outline-output" rows="10" placeholder="Outline will appear here. Edit it then generate the full paper..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion">
+          <div class="accordion-header" onclick="toggleAccordion('research-acc')">
+            <div class="accordion-title">✨ Step 2 — Generate & Humanize Full Paper <span class="tag">1500–1800 words</span></div>
+            <div class="accordion-toggle open" id="research-acc-toggle">−</div>
+          </div>
+          <div class="accordion-body open" id="research-acc-body">
+            <p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Complete paper with table of contents, in-text citations, footnotes, bibliography in Chicago 17 format — written in your voice.</p>
+            <div class="loading-bar" id="research-loading"></div>
+            <button class="btn btn-gold" onclick="generateResearch()" id="research-gen-btn">✨ Generate & Humanize Full Paper</button>
+            <div style="margin-top:16px;">
+              <label>Generated & Humanized Research Paper</label>
+              <div class="output-box empty" id="research-output">Your research paper will appear here...</div>
+              <div class="word-count" id="research-wordcount"></div>
+            </div>
+            <div class="output-actions" id="research-actions" style="display:none;">
+              <button class="btn btn-primary btn-sm" onclick="downloadOutput('research','docx')">📄 Download Word</button>
+              <button class="btn btn-secondary btn-sm" onclick="downloadOutput('research','txt')">📝 Text</button>
+              <button class="btn btn-secondary btn-sm" onclick="copyOutput('research')">📋 Copy</button>
+              <button class="btn btn-secondary btn-sm" onclick="saveToLog('research')">💾 Save</button>
+            </div>
+            <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+              <label>📌 Paste Humanized Final Version (optional override)</label>
+              <textarea id="research-humanized" rows="6" placeholder="Paste manually humanized version here if needed..."></textarea>
+              <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="saveHumanized('research')">💾 Save Final</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SEARCH PAGE -->
+    <div id="page-search" class="page">
+      <div class="card">
+        <div class="card-title">🔍 Search All Notes & Assignments</div>
+        <div class="search-bar">
+          <input type="text" id="search-input" placeholder="Search by topic, term, keyword, subject..." onkeyup="performSearch()">
+          <button class="btn btn-primary" onclick="performSearch()">Search</button>
+        </div>
+        <div id="search-results"></div>
+      </div>
+    </div>
+
+    <!-- LOG PAGE -->
+    <div id="page-log" class="page">
+      <div class="card">
+        <div class="card-title">📋 Assignment Log</div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+          <select id="log-filter-subject" onchange="renderLog()" style="width:auto;">
+            <option value="">All Subjects</option>
+          </select>
+          <select id="log-filter-type" onchange="renderLog()" style="width:auto;">
+            <option value="">All Types</option>
+            <option value="video">Video Reflection</option>
+            <option value="discussion">Discussion</option>
+            <option value="research">Research Paper</option>
+          </select>
+        </div>
+        <div id="log-list"></div>
+      </div>
+    </div>
+
+    <!-- CONFIG PAGE -->
+    <div id="page-config" class="page">
+      <div class="card">
+        <div class="config-section">
+          <div class="config-title">🔑 Anthropic API Key</div>
+          <div class="alert alert-info">Your API key is stored locally in your browser only — never sent anywhere except directly to Anthropic's servers when generating assignments.</div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="config-anthropic-key" placeholder="sk-ant-...">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveConfig('anthropic')">Save API Key</button>
+          <span id="anthropic-save-status" style="font-size:12px;color:var(--teal);margin-left:10px;"></span>
+        </div>
+
+        <div class="config-section">
+          <div class="config-title">☁️ Microsoft OneDrive (Graph API)</div>
+          <div class="alert alert-info">Files will be saved automatically to your OneDrive after each assignment is generated. Requires Azure App Registration with Files.ReadWrite permission.</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Client ID (Application ID)</label>
+              <input type="password" id="config-graph-client-id" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label>Client Secret</label>
+              <input type="password" id="config-graph-secret" placeholder="Your app client secret value">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Tenant ID (Directory ID)</label>
+              <input type="password" id="config-graph-tenant" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx">
+            </div>
+            <div class="form-group">
+              <label>OneDrive User Email</label>
+              <input type="text" id="config-graph-email" placeholder="your@email.com">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>OneDrive Base Folder Path</label>
+            <input type="text" id="config-onedrive-path" placeholder="e.g. Paul - Hosanna Music/COTS M.Div Hosanna/Paul's Moodle Assignment Dashboard">
+          </div>
+          <div style="display:flex;gap:10px;margin-top:4px;flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="saveConfig('graph')">Save OneDrive Settings</button>
+            <button class="btn btn-secondary btn-sm" onclick="testOneDrive()">🔗 Test Connection</button>
+          </div>
+          <span id="graph-save-status" style="font-size:12px;color:var(--teal);margin-left:0px;margin-top:8px;display:block;"></span>
+        </div>
+
+        <div class="config-section">
+          <div class="config-title">👤 Your Profile</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>Your Name</label>
+              <input type="text" id="config-name" placeholder="Paul">
+            </div>
+            <div class="form-group">
+              <label>Seminary</label>
+              <input type="text" id="config-seminary" placeholder="COTS IPC Kerala">
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Ministry Context (used in all generations)</label>
+            <textarea id="config-context" rows="3" placeholder="e.g. Expository pastor, 4 years ministry in Nepal, Hindu/Buddhist context, 3 E's approach (Expository, Exhort, Examples)..."></textarea>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveConfig('profile')">Save Profile</button>
+          <span id="profile-save-status" style="font-size:12px;color:var(--teal);margin-left:10px;"></span>
+        </div>
+
+        <div class="config-section">
+          <div class="config-title">🗑️ Data Management</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="exportAllData()">📤 Export All Data</button>
+            <button class="btn btn-secondary btn-sm" onclick="importData()">📥 Import Data</button>
+            <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑️ Clear All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-add-subject">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-add-subject')">✕</button>
+    <div class="modal-title">Add New Subject</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Subject Number (out of 32)</label>
+        <input type="number" id="new-subject-number" placeholder="e.g. 15" min="1" max="32">
+      </div>
+      <div class="form-group">
+        <label>Subject Code (optional)</label>
+        <input type="text" id="new-subject-code" placeholder="e.g. BIBL501">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Subject Name</label>
+      <input type="text" id="new-subject-name" placeholder="e.g. Interpreting the Bible">
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Number of Weeks</label>
+        <select id="new-subject-weeks">
+          <option value="6">6 Weeks</option>
+          <option value="7">7 Weeks</option>
+          <option value="8">8 Weeks</option>
+          <option value="10">10 Weeks</option>
+          <option value="12">12 Weeks</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>OneDrive Subfolder</label>
+        <input type="text" id="new-subject-folder" placeholder="e.g. Hermeneutics">
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px;">
+      <button class="btn btn-primary" onclick="addSubject()">Add Subject</button>
+      <button class="btn btn-secondary" onclick="closeModal('modal-add-subject')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-log-view">
+  <div class="modal" style="max-width:800px;">
+    <button class="modal-close" onclick="closeModal('modal-log-view')">✕</button>
+    <div class="modal-title" id="log-view-title">Assignment</div>
+    <div id="log-view-meta" style="font-size:12px;color:var(--muted);margin-bottom:16px;"></div>
+    <div class="output-box" id="log-view-content" style="max-height:400px;overflow-y:auto;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-primary btn-sm" onclick="downloadLogItem()">📄 Download Word</button>
+      <button class="btn btn-secondary btn-sm" onclick="copyLogItem()">📋 Copy</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// STATE & STORAGE
+// ============================================================
+let state = {
+  subjects: [],
+  log: [],
+  config: {},
+  currentSubject: null,
+  currentWeek: 1,
+  curatedBooks: '',
+  currentLogItem: null
+};
+
+// PDF contents stored in memory only (not localStorage - too large)
+let pdfMemory = {};
+
+function loadState() {
+  try {
+    const saved = localStorage.getItem('pauls_dashboard');
+    if (saved) state = { ...state, ...JSON.parse(saved) };
+  } catch(e) {}
+}
+
+function saveState() {
+  try {
+    // Save only lightweight data - never PDF contents
+    const toSave = {
+      subjects: state.subjects,
+      log: state.log,
+      config: state.config,
+      currentSubject: state.currentSubject,
+      currentWeek: state.currentWeek,
+      curatedBooks: state.curatedBooks ? state.curatedBooks.substring(0, 5000) : ''
+    };
+    localStorage.setItem('pauls_dashboard', JSON.stringify(toSave));
+  } catch(e) {
+    // Try saving without log if still full
+    try {
+      const minimal = { subjects: state.subjects, config: state.config, currentSubject: state.currentSubject, currentWeek: state.currentWeek };
+      localStorage.setItem('pauls_dashboard', JSON.stringify(minimal));
+      console.warn('Saved minimal state - log may be large');
+    } catch(e2) { console.error('localStorage completely full'); }
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+loadState();
+renderSubjectList();
+renderStats();
+renderLog();
+loadConfigUI();
+
+// Auto-launch proxy and check status
+async function checkProxyStatus() {
+  const el = document.getElementById('proxy-status');
+  if (!el) return;
+
+  // If hosted on OneDrive/SharePoint — check Graph API directly
+  if (window.location.protocol !== 'file:') {
+    if (state.config.graphClientId && state.config.graphEmail) {
+      try {
+        const token = await getGraphToken();
+        if (token) {
+          el.textContent = '🟢 OneDrive Connected';
+          el.style.background = '#e6f4f1';
+          el.style.color = 'var(--teal)';
+          return true;
+        }
+      } catch(e) {}
+    }
+    el.textContent = '⚪ Configure OneDrive in Settings';
+    el.style.background = '#f7f4ee';
+    el.style.color = 'var(--muted)';
+    return false;
+  }
+
+  // Local file mode — check proxy
+  try {
+    const resp = await fetch('http://localhost:9847/health', {signal: AbortSignal.timeout(2000)});
+    if (resp.ok) {
+      el.textContent = '🟢 OneDrive Connected';
+      el.style.background = '#e6f4f1';
+      el.style.color = 'var(--teal)';
+      await syncConfigToProxy();
+      return true;
+    }
+  } catch(e) {}
+  el.textContent = '🔴 Proxy Offline — Start LAUNCH DASHBOARD.bat';
+  el.style.background = '#fdf0f0';
+  el.style.color = 'var(--red)';
+  return false;
+}
+
+async function autoLaunchProxy() {
+  // Check if already running
+  const running = await checkProxyStatus();
+  if (running) return;
+
+  // Try to launch proxy via a helper file
+  // Works by opening the launcher script via a protocol handler
+  const el = document.getElementById('proxy-status');
+  el.textContent = '🔄 Starting OneDrive...';
+  el.style.background = '#fef3c7';
+  el.style.color = '#92400e';
+
+  // Try opening the launcher
+  try {
+    // Create a hidden iframe to trigger the launcher
+    const iframe = document.createElement('iframe');
+    iframe.style.display = 'none';
+    iframe.src = 'proxy_launcher.html';
+    document.body.appendChild(iframe);
+  } catch(e) {}
+
+  // Wait and check again
+  await new Promise(r => setTimeout(r, 3000));
+  await checkProxyStatus();
+}
+
+autoLaunchProxy();
+setInterval(checkProxyStatus, 15000);
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const titles = { dashboard: 'Dashboard', search: 'Search Notes', log: 'Assignment Log', config: 'Settings', subject: 'Subject Workspace' };
+  document.getElementById('topbar-title').textContent = titles[page] || page;
+  if (page !== 'subject') document.getElementById('topbar-subject').textContent = 'Welcome, ' + (state.config.name || 'Paul');
+}
+
+function switchAssignTab(tab, el) {
+  document.querySelectorAll('.assignment-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  ['video','discussion','research'].forEach(t => {
+    document.getElementById('assign-tab-' + t).style.display = t === tab ? 'block' : 'none';
+  });
+}
+
+// ============================================================
+// SUBJECTS
+// ============================================================
+function renderSubjectList() {
+  const el = document.getElementById('subject-list');
+  el.innerHTML = '';
+  state.subjects.forEach((s, i) => {
+    const div = document.createElement('div');
+    div.className = 'subject-item' + (state.currentSubject === i ? ' active' : '');
+    const numLabel = s.number ? `<span style="font-size:10px;opacity:0.5;margin-right:4px;">#${s.number}</span>` : '';
+    div.innerHTML = `<span class="subject-name">${numLabel}${s.name}</span><span class="badge">${s.weeks}w</span>`;
+    div.onclick = () => selectSubject(i);
+    el.appendChild(div);
+  });
+}
+
+function openAddSubject() { openModal('modal-add-subject'); }
+
+function addSubject() {
+  const name = document.getElementById('new-subject-name').value.trim();
+  if (!name) { alert('Please enter a subject name.'); return; }
+  const num = document.getElementById('new-subject-number') ? parseInt(document.getElementById('new-subject-number').value) || '' : '';
+  state.subjects.push({
+    name,
+    number: num,
+    code: document.getElementById('new-subject-code').value.trim(),
+    weeks: parseInt(document.getElementById('new-subject-weeks').value),
+    folder: document.getElementById('new-subject-folder').value.trim() || name,
+    data: {}
+  });
+  state.subjects.sort((a,b) => (a.number||999) - (b.number||999));
+  saveState();
+  renderSubjectList();
+  renderStats();
+  closeModal('modal-add-subject');
+  document.getElementById('new-subject-name').value = '';
+  if(document.getElementById('new-subject-number')) document.getElementById('new-subject-number').value = '';
+  document.getElementById('new-subject-code').value = '';
+  document.getElementById('new-subject-folder').value = '';
+}
+
+function selectSubject(i) {
+  state.currentSubject = i;
+  state.currentWeek = 1;
+  saveState();
+  renderSubjectList();
+  renderWeekTabs();
+  loadWeekData();
+  showPage('subject');
+  const s = state.subjects[i];
+  const numPrefix = s.number ? 'Subject ' + s.number + ' — ' : '';
+  document.getElementById('topbar-title').textContent = numPrefix + s.name;
+  document.getElementById('topbar-subject').textContent = (s.code ? s.code + ' · ' : '') + s.weeks + ' weeks · ' + (32 - (s.number||0)) + ' subjects remaining';
+}
+
+// ============================================================
+// WEEKS
+// ============================================================
+function renderWeekTabs() {
+  const s = state.subjects[state.currentSubject];
+  const el = document.getElementById('week-tabs-container');
+  el.innerHTML = '';
+  for (let w = 1; w <= s.weeks; w++) {
+    const btn = document.createElement('button');
+    btn.className = 'week-tab' + (state.currentWeek === w ? ' active' : '');
+    btn.textContent = 'Week ' + w;
+    btn.onclick = () => selectWeek(w);
+    el.appendChild(btn);
+  }
+  // Spacer
+  const spacer = document.createElement('div');
+  spacer.style.flex = '1';
+  el.appendChild(spacer);
+  // Export This Week button
+  const weekBtn = document.createElement('button');
+  weekBtn.className = 'btn btn-secondary btn-sm';
+  weekBtn.style.cssText = 'white-space:nowrap;';
+  weekBtn.innerHTML = '📄 Export This Week';
+  weekBtn.id = 'export-week-btn';
+  weekBtn.onclick = () => exportWeekWord(state.currentWeek);
+  el.appendChild(weekBtn);
+  // Export All Weeks button
+  const exportBtn = document.createElement('button');
+  exportBtn.className = 'btn btn-gold btn-sm';
+  exportBtn.style.cssText = 'white-space:nowrap;';
+  exportBtn.innerHTML = '📥 Export All Weeks (Word)';
+  exportBtn.onclick = () => exportAllWeeksWord();
+  el.appendChild(exportBtn);
+}
+
+function selectWeek(w) {
+  state.currentWeek = w;
+  saveState();
+  renderWeekTabs();
+  loadWeekData();
+}
+
+function getWeekKey() { return 'w' + state.currentWeek; }
+
+function getWeekData() {
+  const s = state.subjects[state.currentSubject];
+  if (!s.data[getWeekKey()]) s.data[getWeekKey()] = {};
+  return s.data[getWeekKey()];
+}
+
+function loadWeekData() {
+  const d = getWeekData();
+  safeSet('video-question', d.videoQuestion || '');
+  safeSet('video-output', d.videoOutput || '');
+  safeSet('video-humanized', d.videoHumanized || '');
+  safeSet('gd-question', d.gdQuestion || '');
+  safeSet('gd1-output', d.gd1Output || '');
+  safeSet('gd1-humanized', d.gd1Humanized || '');
+  safeSet('gd2-input', d.gd2Input || '');
+  safeSet('gd2-output', d.gd2Output || '');
+  safeSet('gd2-humanized', d.gd2Humanized || '');
+  safeSet('gd3-input', d.gd3Input || '');
+  safeSet('gd3-output', d.gd3Output || '');
+  safeSet('gd3-humanized', d.gd3Humanized || '');
+  safeSet('research-question', d.researchQuestion || '');
+  safeSet('outline-output', d.outlineOutput || '');
+  safeSet('research-output', d.researchOutput || '');
+  updateOutputDisplay('video', d.videoOutput || '');
+  updateOutputDisplay('gd1', d.gd1Output || '');
+  updateOutputDisplay('gd2', d.gd2Output || '');
+  updateOutputDisplay('gd3', d.gd3Output || '');
+  updateOutputDisplay('research', d.researchOutput || '');
+  renderTranscriptSlots();
+  renderPDFList();
+}
+
+function safeSet(id, val) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  if (el.tagName === 'TEXTAREA' || el.tagName === 'INPUT') el.value = val;
+  else el.textContent = val;
+}
+
+// ============================================================
+// TRANSCRIPT SLOTS
+// ============================================================
+function renderTranscriptSlots() {
+  const count = parseInt(document.getElementById('video-count').value) || 2;
+  const d = getWeekData();
+  const el = document.getElementById('transcript-slots');
+  el.innerHTML = '';
+  for (let i = 1; i <= count; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'transcript-slot';
+    const saved = d['transcript' + i] || '';
+    const savedTitle = d['transcriptTitle' + i] || '';
+    const displayTitle = savedTitle || ('Video ' + i + ' Transcript');
+    slot.innerHTML = `
+      <div class="transcript-slot-header" onclick="toggleSlot(${i})">
+        <div style="display:flex;align-items:center;gap:8px;flex:1;" onclick="event.stopPropagation()">
+          <span>📹</span>
+          <input type="text" id="transcript-title-${i}" value="${savedTitle}" placeholder="Video ${i} — Enter lecture title..." 
+            style="border:none;background:transparent;font-size:13px;font-weight:500;color:inherit;flex:1;outline:none;cursor:text;"
+            onchange="saveTranscriptTitle(${i})" onclick="event.stopPropagation()">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span style="font-size:11px;color:var(--muted);">${saved ? '✅ ' + saved.split(' ').length + ' words' : 'empty'}</span>
+          <div style="width:22px;height:22px;border-radius:50%;background:var(--parchment);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted);" id="slot-toggle-${i}">+</div>
+        </div>
+      </div>
+      <div class="transcript-slot-body" id="slot-body-${i}">
+        <textarea id="transcript-${i}" rows="6" placeholder="Paste the full transcript from ${displayTitle} here. You can also type rough notes..." onchange="saveTranscript(${i})">${saved}</textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <input type="file" id="transcript-file-${i}" accept=".txt,.docx,.pdf" style="display:none;" onchange="loadTranscriptFile(event, ${i})">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('transcript-file-${i}').click()">📎 Upload File</button>
+        </div>
+      </div>`;
+    el.appendChild(slot);
+  }
+}
+
+function saveTranscriptTitle(i) {
+  const d = getWeekData();
+  d['transcriptTitle' + i] = document.getElementById('transcript-title-' + i).value;
+  saveState();
+}
+
+function toggleSlot(i) {
+  const body = document.getElementById('slot-body-' + i);
+  const toggle = document.getElementById('slot-toggle-' + i);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if (toggle) toggle.textContent = isOpen ? '+' : '−';
+}
+
+function saveTranscript(i) {
+  const d = getWeekData();
+  const text = document.getElementById('transcript-' + i).value;
+  d['transcript' + i] = text;
+  saveState();
+  // Also persist to OneDrive
+  if (text && state.config.graphClientId) {
+    const title = d['transcriptTitle' + i] || ('Video ' + i);
+    saveTranscriptToOneDrive(i, title, text).then(r => {
+      if (r) showToast('✅ Transcript saved to OneDrive');
+    });
+  }
+}
+
+function loadTranscriptFile(event, i) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    document.getElementById('transcript-' + i).value = e.target.result;
+    saveTranscript(i);
+    renderTranscriptSlots();
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// PDF HANDLING
+// ============================================================
+function handlePDFUpload(event) {
+  const files = Array.from(event.target.files);
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = async e => {
+      const textContent = e.target.result;
+      // Store text in memory for this session
+      pdfMemory[file.name] = textContent;
+
+      // Store filename in state
+      const d = getWeekData();
+      if (!d.pdfFiles) d.pdfFiles = [];
+      if (!d.pdfFiles.includes(file.name)) d.pdfFiles.push(file.name);
+      saveState();
+      renderPDFList();
+      showToast('📄 ' + file.name + ' loaded — uploading to OneDrive...');
+
+      // Upload PDF + extracted text to OneDrive
+      if (state.config.graphClientId) {
+        const result = await uploadPDFToOneDrive(file, textContent);
+        if (result) {
+          d['pdfUrl_' + file.name] = result;
+          saveState();
+          renderPDFList();
+          showToast('✅ ' + file.name + ' saved to OneDrive');
+        }
+      }
+    };
+    reader.readAsText(file);
+  });
+}
+
+function renderPDFList() {
+  const el = document.getElementById('pdf-list');
+  if (!el) return;
+  el.innerHTML = '';
+  const d = getWeekData ? getWeekData() : {};
+  const files = d.pdfFiles || [];
+  
+  if (!files.length && !Object.keys(pdfMemory).length) return;
+  
+  // Show files in memory
+  const allFiles = [...new Set([...files, ...Object.keys(pdfMemory)])];
+  
+  allFiles.forEach(name => {
+    const inMemory = !!pdfMemory[name];
+    const div = document.createElement('div');
+    div.className = 'pdf-item';
+    const words = inMemory ? pdfMemory[name].split(' ').length : 0;
+    const d2 = getWeekData ? getWeekData() : {};
+    const hasSummary = !!d2['pdfSummary_' + name];
+    const oneDriveUrl = d2['pdfUrl_' + name];
+
+    // Summary button — always visible if summary exists (no tokens needed)
+    let actionBtn = '';
+    if (hasSummary) {
+      actionBtn = `<button class="btn btn-secondary btn-sm" style="background:#fef3c7;border-color:#fcd34d;color:#92400e;" onclick="showSummary('${name}', getWeekData()['pdfSummary_${name}'])">📋 View Summary</button>`;
+    } else if (inMemory) {
+      actionBtn = `<button class="btn btn-secondary btn-sm" onclick="summarizePDF('${name}')">🔍 Summarize</button>`;
+    }
+
+    const cloudBadge = oneDriveUrl ? ' <span style="font-size:10px;color:var(--teal);">☁️</span>' : '';
+    const summaryBadge = hasSummary ? ' <span style="font-size:10px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;">📋 summary</span>' : '';
+
+    div.innerHTML = `
+      <div style="flex:1;">
+        <div class="pdf-name">📄 ${name}${cloudBadge}${summaryBadge}</div>
+        <div class="pdf-status ${inMemory ? 'done' : ''}">${inMemory ? words.toLocaleString() + ' words loaded in memory' : '⚠️ Re-upload to generate' + (hasSummary ? ' (summary still available)' : '')}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        ${actionBtn}
+        <button class="btn btn-danger btn-sm" onclick="removePDFEntry('${name}')">✕</button>
+      </div>`;
+    el.appendChild(div);
+  });
+}
+
+function removePDFEntry(name) {
+  // Remove from memory
+  delete pdfMemory[name];
+  // Remove from state file list (but keep summary)
+  const d = getWeekData();
+  if (d.pdfFiles) d.pdfFiles = d.pdfFiles.filter(f => f !== name);
+  // Also clear summary if user wants
+  saveState();
+  renderPDFList();
+}
+
+function removePDF(name) { removePDFEntry(name); }
+
+async function summarizePDF(name) {
+  const key = state.config.anthropicKey;
+  if (!key) { alert('Please set your Anthropic API key in Settings first.'); return; }
+
+  // Check if summary already saved — load from OneDrive without using tokens
+  const d = getWeekData();
+  if (d['pdfSummary_' + name]) {
+    showSummary(name, d['pdfSummary_' + name]);
+    return;
+  }
+
+  const pdfText = pdfMemory[name];
+  if (!pdfText) {
+    alert('PDF not in memory — please re-upload ' + name + ' first.');
+    return;
+  }
+
+  const summaryEl = document.getElementById('pdf-summaries');
+  summaryEl.innerHTML = '<div class="alert alert-info">📖 Reading and summarizing ' + name + ' — this uses API tokens once, then saves permanently...</div>';
+
+  try {
+    const result = await callClaude(key,
+      `You are a seminary professor. Read this academic text and provide a detailed scholarly summary including: main thesis, key theological concepts and definitions, important terminology used by the author, key arguments, and how it relates to biblical hermeneutics. Be thorough — this summary will be used to write seminary assignments and will be saved permanently for future reference.\n\nDocument: ${name}\n\nContent:\n${pdfText.substring(0, 50000)}`,
+      2000
+    );
+
+    // Save to state permanently
+    d['pdfSummary_' + name] = result;
+    saveState();
+
+    // Save to OneDrive permanently
+    const s = state.subjects[state.currentSubject];
+    if (s && state.config.graphClientId) {
+      const folderPath = getSubjectFolderPath(state.currentWeek, 'Reading PDFs');
+      const summaryFileName = name.replace(/\.pdf$/i, '') + '_SUMMARY.txt';
+      await saveTextToOneDrive(summaryFileName, result, folderPath);
+      showToast('✅ Summary saved permanently to OneDrive');
+    }
+
+    showSummary(name, result);
+    renderPDFList(); // Refresh to show saved icon
+  } catch(e) {
+    summaryEl.innerHTML = '<div class="alert alert-error">Error: ' + e.message + '</div>';
+  }
+}
+
+function showSummary(name, text) {
+  const summaryEl = document.getElementById('pdf-summaries');
+  summaryEl.innerHTML = `
+    <div class="card">
+      <div class="card-title">
+        📖 Summary: ${name}
+        <span style="font-size:11px;background:#e6f4f1;color:#2a7c6f;padding:3px 8px;border-radius:4px;font-family:Inter,sans-serif;">
+          ☁️ Saved — no tokens needed to view again
+        </span>
+      </div>
+      <div class="summary-box" style="max-height:400px;overflow-y:auto;">${text.split('\n').join('<br>')}</div>
+      <button class="btn btn-secondary btn-sm" style="margin-top:12px;" onclick="document.getElementById('pdf-summaries').innerHTML=''">
+        Close Summary
+      </button>
+    </div>`;
+}
+
+function handleCuratedBooks(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    state.curatedBooks = e.target.result;
+    saveState();
+    document.getElementById('curated-books-status').textContent = '✅ ' + file.name + ' loaded';
+  };
+  reader.readAsText(file);
+}
+
+// ============================================================
+// CLAUDE API
+// ============================================================
+async function callClaude(apiKey, prompt, maxTokens = 2000) {
+  // Direct Anthropic API call — works from https:// origins (OneDrive, SharePoint)
+  // Falls back to local proxy if running locally via file://
+  const isLocal = window.location.protocol === 'file:';
+  const url = isLocal ? 'http://localhost:9847/claude' : 'https://api.anthropic.com/v1/messages';
+
+  try {
+    let response;
+    if (isLocal) {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ apiKey, maxTokens, system: buildSystemPrompt(), prompt })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || 'API error ' + response.status);
+      }
+      const data = await response.json();
+      return data.text || '';
+    } else {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-beta': 'prompt-caching-2024-07-31'
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-5',
+          max_tokens: maxTokens,
+          system: buildSystemPrompt(),
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error?.message || 'API error ' + response.status);
+      }
+      const data = await response.json();
+      return data.content.map(b => b.text || '').join('');
+    }
+  } catch(e) {
+    if (e.message.includes('Failed to fetch') && isLocal) {
+      throw new Error('Proxy not running. Start LAUNCH DASHBOARD.bat first.');
+    }
+    throw e;
+  }
+}
+
+function buildSystemPrompt() {
+  const profile = state.config;
+  return `You are writing academic seminary assignments for ${profile.name || 'Paul'}, an expository pastor doing an M.Div at COTS IPC Kerala. 
+
+PAUL'S MINISTRY CONTEXT: ${profile.ministryContext || '4 years of expository preaching ministry in Nepal. Hindu and Buddhist majority context. Uses the 3 E approach: Expository (text first), Exhort (from the text), Examples (modern stories or self-constructed parables that serve the text). Avoids allegorical interpretation in preaching.'}
+
+WRITING VOICE — write exactly like Paul:
+- Direct, candid, reflective tone ("I have to be honest", "to be honest")
+- Heavy use of dashes for flowing connected thought
+- Ampersands (&) in casual phrasing  
+- Slightly imperfect grammar that feels real and natural — not polished
+- Mid-sentence scholar references without formal signposting
+- Warm but non-stiff closings
+- Personal Nepal ministry examples woven naturally mid-thought
+- NOT overly academic or stiff — scholarly but human
+
+CITATION STYLE: Chicago 17 format. Minimum 3 citations per assignment.
+
+KEY RECURRING SOURCES:
+- Klyne Snodgrass, Stories with Intent (Eerdmans, 2008)
+- Craig Blomberg, Interpreting the Parables (IVP Academic, 2012)  
+- Fee and Stuart, How to Read the Bible for All Its Worth (Zondervan, 2014)
+
+WORD LIMITS — strictly observe:
+- Video Reflection: 300-500 words (excluding bibliography)
+- Discussion Direct Answer: 100-200 words (excluding bibliography)
+- Peer Responses: 75-150 words each (excluding bibliography)
+- Research Paper: 1500-1800 words (excluding bibliography)`;
+}
+
+// ============================================================
+// GENERATION FUNCTIONS
+// ============================================================
+async function generateVideoReflection() {
+  const key = state.config.anthropicKey;
+  if (!key) { alert('Please set your Anthropic API key in Settings first.'); return; }
+  const question = document.getElementById('video-question').value.trim();
+  if (!question) { alert('Please paste the video reflection question first.'); return; }
+
+  const count = parseInt(document.getElementById('video-count').value);
+  let transcripts = '';
+  for (let i = 1; i <= count; i++) {
+    const t = document.getElementById('transcript-' + i)?.value || '';
+    if (t) transcripts += `\n\nVIDEO ${i} TRANSCRIPT:\n${t}`;
+  }
+  if (!transcripts) { alert('Please add at least one video transcript.'); return; }
+
+  setLoading('video', true);
+  const d = getWeekData();
+  d.videoQuestion = question;
+  saveState();
+
+  try {
+    const prompt = `Write a video reflection assignment answering this question: "${question}"
+
+VIDEO LECTURE TRANSCRIPTS:${transcripts}
+
+Requirements:
+- 300-500 words excluding bibliography
+- Show genuine engagement with what the lecturer actually said — use their specific terminology and examples
+- Apply to Paul's Nepal ministry context naturally
+- Scholarly quality with minimum 3 Chicago 17 citations
+- Write in Paul's voice as described
+- End with Bibliography in Chicago 17 format`;
+
+    const result = await callClaude(key, prompt, 1500);
+    d.videoOutput = result;
+    saveState();
+    updateOutputDisplay('video', result);
+    showOutputActions('video');
+    saveOutputToOneDrive('video', 'Video Reflection');
+
+    // Auto-humanize
+    setLoading('video', true, 'Humanizing...');
+    try {
+      const humanized = await humanizeText(result, 'Video Reflection (300-500 words)');
+      if (humanized) {
+        d.videoHumanized = humanized;
+        saveState();
+        document.getElementById('video-humanized').value = humanized;
+        saveTextToOneDrive('Video Reflection Humanized.txt', humanized, getSubjectFolderPath(state.currentWeek, 'Video Reflection'));
+        showToast('✅ Generated & humanized!');
+      }
+    } catch(e) { console.warn('Humanize step failed:', e.message); }
+  } catch(e) {
+    alert('Generation failed: ' + e.message);
+  }
+  setLoading('video', false);
+}
+
+async function generateGD(entry) {
+  const key = state.config.anthropicKey;
+  if (!key) { alert('Please set your Anthropic API key in Settings first.'); return; }
+  const d = getWeekData();
+
+  let pdfContext = '';
+  Object.keys(pdfMemory).forEach(name => {
+    if (pdfMemory[name]) pdfContext += `\n\nREADING: ${name}\n${pdfMemory[name].substring(0, 8000)}`;
+  });
+
+  let prompt = '';
+  if (entry === 1) {
+    const question = document.getElementById('gd-question').value.trim();
+    if (!question) { alert('Please paste the discussion question.'); return; }
+    d.gdQuestion = question;
+    prompt = `Write a direct answer to this seminary group discussion question: "${question}"
+
+${pdfContext ? 'READING MATERIALS:\n' + pdfContext : ''}
+
+Requirements:
+- 100-200 words STRICTLY (excluding bibliography)  
+- Scholarly quality, research-grade writing
+- Apply Nepal ministry context
+- Minimum 3 Chicago 17 citations
+- Write in Paul's candid, expository voice
+- End with Bibliography`;
+  } else {
+    const inputId = entry === 2 ? 'gd2-input' : 'gd3-input';
+    const classmate = document.getElementById(inputId).value.trim();
+    if (!classmate) { alert('Please paste the classmate\'s response.'); return; }
+    if (entry === 2) d.gd2Input = classmate;
+    else d.gd3Input = classmate;
+    const gdQ = d.gdQuestion || '';
+    prompt = `Write a peer response to this classmate's seminary discussion post.
+
+ORIGINAL DISCUSSION QUESTION: ${gdQ}
+
+CLASSMATE'S POST:
+${classmate}
+
+${pdfContext ? 'READING MATERIALS:\n' + pdfContext.substring(0,5000) : ''}
+
+Requirements:
+- 75-150 words STRICTLY (excluding bibliography)
+- Structure: brief opening appreciation → substantial own contribution (MAJORITY of text) → brief warm closing
+- Bring Paul's OWN point/perspective — don't just respond to classmate, add something
+- Nepal ministry application naturally included
+- Scholarly quality, minimum 3 Chicago 17 citations
+- Write in Paul's candid, expository voice
+- End with Bibliography`;
+  }
+
+  setLoading('gd' + entry, true);
+  saveState();
+
+  try {
+    const result = await callClaude(key, prompt, 800);
+    // Humanize immediately
+    let gdFinal = result;
+    try {
+      const gdType = 'gd' + entry;
+      gdFinal = await callClaude(state.config.anthropicKey, buildHumanizerPrompt(result, gdType), 1000);
+    } catch(e) { gdFinal = result; }
+    if (entry === 1) d.gd1Output = gdFinal;
+    else if (entry === 2) d.gd2Output = gdFinal;
+    else d.gd3Output = gdFinal;
+    saveState();
+    updateOutputDisplay('gd' + entry, gdFinal);
+    showOutputActions('gd' + entry);
+    const gdLabel = entry === 1 ? 'Discussion Direct Answer' : 'Discussion Peer Response ' + (entry-1);
+    saveOutputToOneDrive('gd' + entry, gdLabel);
+
+    // Auto-humanize
+    const wLimit = entry === 1 ? '100-200 words' : '75-150 words';
+    setLoading('gd' + entry, true, 'Humanizing...');
+    try {
+      const humanized = await humanizeText(result, gdLabel + ' (' + wLimit + ')');
+      if (humanized) {
+        if (entry === 1) d.gd1Humanized = humanized;
+        else if (entry === 2) d.gd2Humanized = humanized;
+        else d.gd3Humanized = humanized;
+        saveState();
+        const hEl = document.getElementById('gd' + entry + '-humanized');
+        if (hEl) hEl.value = humanized;
+        showToast('✅ Generated & humanized!');
+      }
+    } catch(e) { console.warn('Humanize failed:', e.message); }
+  } catch(e) {
+    alert('Generation failed: ' + e.message);
+  }
+  setLoading('gd' + entry, false);
+}
+
+async function generateOutline() {
+  const key = state.config.anthropicKey;
+  if (!key) { alert('Please set your Anthropic API key in Settings first.'); return; }
+  const question = document.getElementById('research-question').value.trim();
+  if (!question) { alert('Please paste the research paper question.'); return; }
+
+  setLoading('outline', true);
+  const d = getWeekData();
+  d.researchQuestion = question;
+  saveState();
+
+  const context = document.getElementById('research-context').value;
+  const books = state.curatedBooks;
+
+  try {
+    const prompt = `Create a research paper outline for this seminary assignment: "${question}"
+
+${context ? 'LECTURE NOTES/CONTEXT:\n' + context : ''}
+${books ? 'CURATED BOOK LIST:\n' + books : ''}
+
+Create a detailed outline with:
+- Title
+- Thesis statement
+- Main sections with subsections
+- Suggested Bible passages (2 OT, 2 NT if applicable)
+- Key sources to cite from curated list and additional scholarly sources
+- Approximate word count per section to reach 1500-1800 words total`;
+
+    const result = await callClaude(key, prompt, 1000);
+    d.outlineOutput = result;
+    saveState();
+    document.getElementById('outline-output').value = result;
+  } catch(e) {
+    alert('Generation failed: ' + e.message);
+  }
+  setLoading('outline', false);
+}
+
+async function generateResearch() {
+  const key = state.config.anthropicKey;
+  if (!key) { alert('Please set your Anthropic API key in Settings first.'); return; }
+  const question = document.getElementById('research-question').value.trim();
+  const outline = document.getElementById('outline-output').value.trim();
+  if (!question) { alert('Please paste the research paper question.'); return; }
+
+  setLoading('research', true);
+  const d = getWeekData();
+  const context = document.getElementById('research-context').value;
+  const books = state.curatedBooks;
+
+  try {
+    const prompt = `Write a complete seminary research paper for this assignment: "${question}"
+
+${outline ? 'APPROVED OUTLINE:\n' + outline : ''}
+${context ? 'LECTURE NOTES:\n' + context : ''}
+${books ? 'CURATED BOOK LIST (use these for citations):\n' + books : ''}
+
+Requirements:
+- 1500-1800 words (excluding bibliography)
+- Include: Title, Table of Contents, Introduction, main body sections, Conclusion
+- In-text citations and footnotes in Chicago 17 format
+- Minimum 8-10 scholarly citations
+- Apply Nepal ministry context throughout
+- Write in Paul's voice — scholarly but personal
+- End with complete Bibliography in Chicago 17 format
+- Font note: Times New Roman 12pt single space for final submission`;
+
+    const result = await callClaude(key, prompt, 4000);
+    // Humanize immediately
+    document.getElementById('research-gen-btn').innerHTML = '<span class="spinner"></span>Humanizing...';
+    let resFinal = result;
+    try {
+      resFinal = await callClaude(state.config.anthropicKey, buildHumanizerPrompt(result, 'research'), 4000);
+    } catch(e) { resFinal = result; }
+    d.researchOutput = resFinal;
+    saveState();
+    updateOutputDisplay('research', resFinal);
+    showOutputActions('research');
+    saveOutputToOneDrive('research', 'Research Paper');
+
+    // Auto-humanize
+    setLoading('research', true, 'Humanizing...');
+    try {
+      const humanized = await humanizeText(result, 'Research Paper (1500-1800 words)');
+      if (humanized) {
+        d.researchHumanized = humanized;
+        saveState();
+        document.getElementById('research-humanized') && (document.getElementById('research-humanized').value = humanized);
+        showToast('✅ Generated & humanized!');
+      }
+    } catch(e) { console.warn('Humanize failed:', e.message); }
+  } catch(e) {
+    alert('Generation failed: ' + e.message);
+  }
+  setLoading('research', false);
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function setLoading(id, active) {
+  const bar = document.getElementById(id + '-loading');
+  const btn = document.getElementById(id + '-gen-btn');
+  if (bar) bar.className = 'loading-bar' + (active ? ' active' : '');
+  if (btn) {
+    btn.disabled = active;
+    if (active) btn.innerHTML = '<span class="spinner"></span>Generating...';
+    else btn.innerHTML = '✨ ' + (id === 'outline' ? 'Generate Outline' : id === 'research' ? 'Generate Full Paper' : 'Generate Assignment');
+  }
+}
+
+function updateOutputDisplay(id, text) {
+  const el = document.getElementById(id + '-output');
+  if (!el) return;
+  if (text) {
+    el.className = 'output-box';
+    el.textContent = text;
+    const wc = document.getElementById(id + '-wordcount');
+    if (wc) {
+      const words = text.trim().split(/\s+/).length;
+      wc.textContent = words + ' words';
+      wc.className = 'word-count ok';
+    }
+  } else {
+    el.className = 'output-box empty';
+  }
+}
+
+function showOutputActions(id) {
+  const el = document.getElementById(id + '-actions');
+  if (el) el.style.display = 'flex';
+}
+
+function copyOutput(id) {
+  const el = document.getElementById(id + '-output');
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => alert('Copied to clipboard!'));
+}
+
+function saveHumanized(id) {
+  const d = getWeekData();
+  const val = document.getElementById(id + '-humanized')?.value || '';
+  d[id + 'Humanized'] = val;
+  saveState();
+
+  // Map id to section folder name
+  const sectionMap = {
+    video: 'Video Reflection',
+    gd1: 'Discussion Direct Answer',
+    gd2: 'Discussion Peer Response 1',
+    gd3: 'Discussion Peer Response 2',
+    research: 'Research Paper'
+  };
+  const section = sectionMap[id] || id;
+
+  if (val && state.config.graphClientId) {
+    saveHumanizedToOneDrive(id, val, section).then(r => {
+      if (r) showToast('✅ Humanized version saved to OneDrive');
+    });
+  }
+  showToast('💾 Final version saved!');
+}
+
+// ============================================================
+// DOWNLOAD
+// ============================================================
+function downloadOutput(id, format) {
+  const el = document.getElementById(id + '-output');
+  if (!el || !el.textContent) return;
+  const text = el.textContent;
+  const subject = state.subjects[state.currentSubject]?.name || 'Assignment';
+  const week = 'Week ' + state.currentWeek;
+  const filename = subject + ' - ' + week + ' - ' + id;
+
+  if (format === 'txt') {
+    downloadText(text, filename + '.txt');
+  } else if (format === 'docx') {
+    downloadAsWord(text, filename);
+  }
+}
+
+function downloadText(content, filename) {
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+}
+
+function downloadAsWord(content, filename) {
+  const htmlContent = `
+    <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+    <head><meta charset='utf-8'><title>${filename}</title>
+    <style>
+      body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 2.5cm; color: #000; }
+      h1 { font-size: 14pt; font-weight: bold; text-align: center; margin-bottom: 12pt; }
+      h2 { font-size: 13pt; font-weight: bold; margin-top: 12pt; margin-bottom: 6pt; }
+      p { margin-bottom: 8pt; text-align: justify; }
+      .bibliography { margin-top: 20pt; }
+    </style>
+    </head><body>
+    ${content.replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>').replace(/^/,'<p>').replace(/$/,'</p>')}
+    </body></html>`;
+  const blob = new Blob([htmlContent], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename + '.doc';
+  a.click();
+}
+
+// ============================================================
+// LOG
+// ============================================================
+function saveToLog(type) {
+  const el = document.getElementById(type + '-output');
+  if (!el || !el.textContent || el.classList.contains('empty')) return;
+  const subject = state.subjects[state.currentSubject]?.name || 'Unknown';
+  const typeLabels = { video: 'Video Reflection', gd1: 'Discussion — Direct Answer', gd2: 'Discussion — Peer 1', gd3: 'Discussion — Peer 2', research: 'Research Paper' };
+  state.log.unshift({
+    id: Date.now(),
+    subject,
+    week: 'Week ' + state.currentWeek,
+    type: type.startsWith('gd') ? 'discussion' : type,
+    typeLabel: typeLabels[type] || type,
+    content: el.textContent,
+    date: new Date().toLocaleDateString()
+  });
+  saveState();
+  renderLog();
+  alert('Saved to log!');
+}
+
+function renderLog() {
+  const el = document.getElementById('log-list');
+  if (!el) return;
+  const subjectFilter = document.getElementById('log-filter-subject')?.value || '';
+  const typeFilter = document.getElementById('log-filter-type')?.value || '';
+
+  // Populate subject filter
+  const sf = document.getElementById('log-filter-subject');
+  if (sf) {
+    const current = sf.value;
+    sf.innerHTML = '<option value="">All Subjects</option>';
+    state.subjects.forEach(s => sf.innerHTML += `<option value="${s.name}">${s.name}</option>`);
+    sf.value = current;
+  }
+
+  let items = state.log;
+  if (subjectFilter) items = items.filter(i => i.subject === subjectFilter);
+  if (typeFilter) items = items.filter(i => i.type === typeFilter);
+
+  if (!items.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">📋</div><h3>No assignments yet</h3><p>Generate and save assignments to see them here.</p></div>';
+    return;
+  }
+
+  el.innerHTML = '';
+  items.forEach(item => {
+    const div = document.createElement('div');
+    div.className = 'log-item';
+    div.onclick = () => viewLogItem(item);
+    div.innerHTML = `
+      <div>
+        <div class="log-title">${item.subject} — ${item.week}</div>
+        <div class="log-meta">${item.typeLabel} · Saved ${item.date}</div>
+      </div>
+      <span class="log-type ${item.type}">${item.typeLabel}</span>`;
+    el.appendChild(div);
+  });
+}
+
+let currentLogItem = null;
+function viewLogItem(item) {
+  currentLogItem = item;
+  document.getElementById('log-view-title').textContent = item.subject + ' — ' + item.week;
+  document.getElementById('log-view-meta').textContent = item.typeLabel + ' · ' + item.date;
+  document.getElementById('log-view-content').textContent = item.content;
+  openModal('modal-log-view');
+}
+
+function downloadLogItem() {
+  if (!currentLogItem) return;
+  downloadAsWord(currentLogItem.content, currentLogItem.subject + ' - ' + currentLogItem.week + ' - ' + currentLogItem.typeLabel);
+}
+
+function copyLogItem() {
+  if (!currentLogItem) return;
+  navigator.clipboard.writeText(currentLogItem.content).then(() => alert('Copied!'));
+}
+
+// ============================================================
+// SEARCH
+// ============================================================
+async function performSearch() {
+  const query = document.getElementById('search-input').value.trim();
+  const el = document.getElementById('search-results');
+  if (!query || query.length < 2) { el.innerHTML = ''; return; }
+
+  el.innerHTML = '<div class="alert alert-info">🔍 Searching OneDrive across all subjects...</div>';
+
+  // Always search OneDrive first if configured
+  let results = [];
+  if (state.config.graphClientId && state.config.graphTenant && state.config.graphEmail) {
+    try {
+      results = await searchOneDrive(query);
+    } catch(e) {
+      console.error('OneDrive search error:', e.message);
+    }
+  }
+
+  // Also search local log as fallback / supplement
+  state.log.forEach(item => {
+    const searchIn = (item.content || '') + ' ' + (item.subject || '') + ' ' + (item.typeLabel || '');
+    if (searchIn.toLowerCase().includes(query.toLowerCase())) {
+      const idx2 = searchIn.toLowerCase().indexOf(query.toLowerCase());
+      const excerpt = searchIn.substring(Math.max(0, idx2 - 100), idx2 + 200);
+      // Avoid duplicates
+      if (!results.find(r => r.fileName && r.fileName.includes(item.typeLabel) && r.week === item.week)) {
+        results.push({
+          subject: item.subject,
+          week: item.week,
+          section: item.typeLabel,
+          fileName: item.typeLabel + ' (local log)',
+          filePath: null,
+          excerpt,
+          webUrl: null,
+          isLocal: true,
+          logItem: item
+        });
+      }
+    }
+  });
+
+  if (!results.length) {
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search term. Results appear from OneDrive and local log.</p></div>';
+    return;
+  }
+
+  el.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-bottom:12px;">' + results.length + ' result(s) found</p>';
+
+  results.forEach(r => {
+    const div = document.createElement('div');
+    div.className = 'search-result';
+    const ql = query.toLowerCase();
+    const safeQ = query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'); const highlighted = r.excerpt.replace(new RegExp(safeQ, 'gi'), m => '<mark>' + m + '</mark>');
+    div.innerHTML = `
+      <div class="result-meta">
+        📁 ${r.subject || ''} · ${r.week || ''} · ${r.section || ''}
+        ${r.webUrl ? '<a href="' + r.webUrl + '" target="_blank" style="color:var(--teal);text-decoration:none;margin-left:8px;">☁️ Open in OneDrive</a>' : ''}
+        ${r.isLocal ? '<span style="color:var(--muted);margin-left:8px;">(local)</span>' : ''}
+      </div>
+      <div class="result-title">📄 ${r.fileName || ''}</div>
+      <div class="result-excerpt">...${highlighted}...</div>`;
+    if (r.logItem) div.onclick = () => viewLogItem(r.logItem);
+    else if (r.webUrl) div.onclick = () => window.open(r.webUrl, '_blank');
+    el.appendChild(div);
+  });
+}
+
+// ============================================================
+// STATS
+// ============================================================
+function renderStats() {
+  const el = document.getElementById('stats-row');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="stat-card"><div class="stat-num">${state.subjects.length}</div><div class="stat-label">Subjects</div></div>
+    <div class="stat-card"><div class="stat-num">${state.log.length}</div><div class="stat-label">Assignments Saved</div></div>
+    <div class="stat-card"><div class="stat-num">${32 - state.subjects.length}</div><div class="stat-label">Subjects Remaining</div></div>`;
+
+  // Recent log on home
+  const recentEl = document.getElementById('recent-log-home');
+  if (!recentEl) return;
+  if (!state.log.length) {
+    recentEl.innerHTML = '<div class="card"><div class="card-title">📋 Recent Assignments</div><div class="empty-state" style="padding:30px 0;"><div class="empty-icon">✍️</div><h3>No assignments yet</h3><p>Select a subject from the sidebar to get started.</p></div></div>';
+    return;
+  }
+  recentEl.innerHTML = '<div class="card"><div class="card-title">📋 Recent Assignments</div>' +
+    state.log.slice(0,5).map(item => `
+      <div class="log-item" onclick="viewLogItem(${JSON.stringify(item).replace(/"/g,'&quot;')})">
+        <div><div class="log-title">${item.subject} — ${item.week}</div><div class="log-meta">${item.date}</div></div>
+        <span class="log-type ${item.type}">${item.typeLabel}</span>
+      </div>`).join('') + '</div>';
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function saveConfig(section) {
+  if (section === 'anthropic') {
+    state.config.anthropicKey = document.getElementById('config-anthropic-key').value.trim();
+    document.getElementById('anthropic-save-status').textContent = '✅ Saved';
+    setTimeout(() => document.getElementById('anthropic-save-status').textContent = '', 2000);
+  } else if (section === 'graph') {
+    state.config.graphClientId = document.getElementById('config-graph-client-id').value.trim();
+    state.config.graphSecret = document.getElementById('config-graph-secret').value.trim();
+    state.config.graphTenant = document.getElementById('config-graph-tenant').value.trim();
+    state.config.graphEmail = document.getElementById('config-graph-email').value.trim();
+    state.config.onedrivePath = document.getElementById('config-onedrive-path').value.trim();
+    document.getElementById('graph-save-status').textContent = '✅ Saved — syncing to proxy...';
+    syncConfigToProxy().then(() => {
+      document.getElementById('graph-save-status').textContent = '✅ Saved & synced to proxy';
+      setTimeout(() => document.getElementById('graph-save-status').textContent = '', 3000);
+    });
+  } else if (section === 'profile') {
+    state.config.name = document.getElementById('config-name').value.trim();
+    state.config.seminary = document.getElementById('config-seminary').value.trim();
+    state.config.ministryContext = document.getElementById('config-context').value.trim();
+    document.getElementById('profile-save-status').textContent = '✅ Saved';
+    setTimeout(() => document.getElementById('profile-save-status').textContent = '', 2000);
+  }
+  saveState();
+}
+
+function loadConfigUI() {
+  const c = state.config;
+  if (c.anthropicKey) document.getElementById('config-anthropic-key').value = c.anthropicKey;
+  if (c.graphClientId) document.getElementById('config-graph-client-id').value = c.graphClientId;
+  if (c.graphSecret) document.getElementById('config-graph-secret').value = c.graphSecret;
+  if (c.graphTenant) document.getElementById('config-graph-tenant').value = c.graphTenant;
+  if (c.graphEmail) document.getElementById('config-graph-email').value = c.graphEmail;
+  if (c.onedrivePath) document.getElementById('config-onedrive-path').value = c.onedrivePath;
+  if (c.name) document.getElementById('config-name').value = c.name;
+  if (c.seminary) document.getElementById('config-seminary').value = c.seminary;
+  if (c.ministryContext) document.getElementById('config-context').value = c.ministryContext;
+}
+
+// ============================================================
+// DATA MANAGEMENT
+// ============================================================
+function exportAllData() {
+  const dataStr = JSON.stringify(state, null, 2);
+  downloadText(dataStr, 'PaulsDashboard_Backup_' + new Date().toISOString().split('T')[0] + '.txt');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.txt,.json';
+  input.onchange = e => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const imported = JSON.parse(ev.target.result);
+        state = { ...state, ...imported };
+        saveState();
+        renderSubjectList();
+        renderStats();
+        renderLog();
+        loadConfigUI();
+        alert('Data imported successfully!');
+      } catch { alert('Invalid file format.'); }
+    };
+    reader.readAsText(e.target.files[0]);
+  };
+  input.click();
+}
+
+function clearAllData() {
+  if (confirm('Are you sure? This will delete ALL subjects, assignments, and logs. Export first!')) {
+    if (confirm('Really sure? This cannot be undone.')) {
+      localStorage.removeItem('pauls_dashboard');
+      location.reload();
+    }
+  }
+}
+
+// ============================================================
+// MODALS
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('active'); }
+function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('active'); }));
+
+
+// ============================================================
+// ACCORDION
+// ============================================================
+function toggleAccordion(id) {
+  const body = document.getElementById(id + '-body');
+  const toggle = document.getElementById(id + '-toggle');
+  if (!body || !toggle) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  toggle.classList.toggle('open', !isOpen);
+  toggle.textContent = isOpen ? '+' : '−';
+}
+
+// ============================================================
+// HUMANIZER — rewrites in Paul's voice
+// ============================================================
+function buildHumanizerPrompt(text, type) {
+  const limits = {
+    video: '300-500 words',
+    gd1: '100-200 words',
+    gd2: '75-150 words',
+    gd3: '75-150 words',
+    research: '1500-1800 words'
+  };
+  const limit = limits[type] || '100-300 words';
+  return `Rewrite the following seminary assignment in a genuinely human, personal academic voice. 
+
+CRITICAL RULES:
+- Sound like a real pastor who has been preaching in Nepal for 4 years — not like polished AI text
+- Use dashes heavily for connected flowing thought — like this
+- Use ampersands (&) in casual phrasing
+- Include slightly imperfect grammar that feels natural and real
+- Start sentences with "I have to be honest" or "To be honest" occasionally  
+- Reference scholars mid-sentence without formal signposting
+- Vary sentence length dramatically — some short. Some much longer and flowing with multiple ideas connected together
+- Avoid: "Moreover", "Furthermore", "It is noteworthy", "Ultimately", "In conclusion"
+- Keep Nepal ministry context grounded and specific — not generic
+- Keep ALL citations and bibliography exactly as written
+- Stay within ${limit} word limit (excluding bibliography)
+- Do NOT add new content — only rewrite in human voice
+
+TEXT TO HUMANIZE:
+${text}`;
+}
+
+async function humanizeOutput(id, type) {
+  const key = state.config.anthropicKey;
+  if (!key) { showToast('❌ Set Anthropic API key in Settings first'); return; }
+  const el = document.getElementById(id + '-output');
+  if (!el || !el.textContent || el.classList.contains('empty')) {
+    showToast('❌ Generate the assignment first'); return;
+  }
+  const originalText = el.textContent;
+  el.textContent = '🔄 Humanizing...';
+  try {
+    const humanized = await callClaude(key, buildHumanizerPrompt(originalText, type), 3000);
+    el.textContent = humanized;
+    el.classList.remove('empty');
+    const wc = document.getElementById(id + '-wordcount');
+    if (wc) {
+      const words = humanized.trim().split(/\s+/).length;
+      wc.textContent = words + ' words';
+      wc.className = 'word-count ok';
+    }
+    // Auto-save humanized to OneDrive
+    const sectionMap = { video:'Video Reflection', gd1:'Discussion Direct Answer', gd2:'Discussion Peer Response 1', gd3:'Discussion Peer Response 2', research:'Research Paper' };
+    saveTextToOneDrive(
+      (state.subjects[state.currentSubject]?.name || 'Assignment') + ' - Week ' + state.currentWeek + ' - ' + (sectionMap[id]||id) + '.txt',
+      humanized,
+      getSubjectFolderPath(state.currentWeek, sectionMap[id]||id)
+    );
+    showToast('✅ Humanized & saved to OneDrive');
+    // Save to state
+    const d = getWeekData();
+    if (id === 'video') d.videoOutput = humanized;
+    else if (id === 'gd1') d.gd1Output = humanized;
+    else if (id === 'gd2') d.gd2Output = humanized;
+    else if (id === 'gd3') d.gd3Output = humanized;
+    else if (id === 'research') d.researchOutput = humanized;
+    saveState();
+  } catch(e) {
+    el.textContent = originalText;
+    showToast('❌ Humanize failed: ' + e.message);
+  }
+}
+
+// ============================================================
+// PER-WEEK EXPORT
+// ============================================================
+function exportWeekWord(weekNum) {
+  const s = state.subjects[state.currentSubject];
+  if (!s) return;
+  const wKey = 'w' + weekNum;
+  const d = s.data[wKey];
+  const subjectLabel = (s.number ? 'Subject ' + s.number + ' — ' : '') + s.name;
+  const weekLabel = 'Week ' + weekNum;
+
+  let sections = '';
+  let hasContent = false;
+
+  // Video Reflection
+  const videoFinal = (d && (d.videoHumanized || d.videoOutput)) || '';
+  sections += '<h2 style="font-size:14pt;color:#2a7c6f;margin-top:20pt;border-bottom:1pt solid #2a7c6f;padding-bottom:4pt;">🎬 Video Reflection</h2>';
+  if (videoFinal) {
+    hasContent = true;
+    if (d.videoQuestion) sections += '<p style="font-style:italic;color:#888070;font-size:11pt;"><strong>Question:</strong> ' + escHtml(d.videoQuestion) + '</p>';
+    sections += '<p>' + videoFinal.split('\n').join('</p><p>') + '</p>';
+  } else {
+    sections += '<p style="color:#aaa;font-style:italic;">(No content for this week)</p>';
+  }
+
+  // Discussion Direct Answer
+  const gd1Final = (d && (d.gd1Humanized || d.gd1Output)) || '';
+  sections += '<h2 style="font-size:14pt;color:#2a7c6f;margin-top:20pt;border-bottom:1pt solid #2a7c6f;padding-bottom:4pt;">💬 Discussion — Direct Answer</h2>';
+  if (gd1Final) {
+    hasContent = true;
+    if (d.gdQuestion) sections += '<p style="font-style:italic;color:#888070;font-size:11pt;"><strong>Question:</strong> ' + escHtml(d.gdQuestion) + '</p>';
+    sections += '<p>' + gd1Final.split('\n').join('</p><p>') + '</p>';
+  } else {
+    sections += '<p style="color:#aaa;font-style:italic;">(No content for this week)</p>';
+  }
+
+  // Peer Response 1
+  const gd2Final = (d && (d.gd2Humanized || d.gd2Output)) || '';
+  sections += '<h2 style="font-size:14pt;color:#2a7c6f;margin-top:20pt;border-bottom:1pt solid #2a7c6f;padding-bottom:4pt;">💬 Discussion — Response to Classmate 1</h2>';
+  if (gd2Final) { hasContent = true; sections += '<p>' + gd2Final.split('\n').join('</p><p>') + '</p>'; }
+  else { sections += '<p style="color:#aaa;font-style:italic;">(No content for this week)</p>'; }
+
+  // Peer Response 2
+  const gd3Final = (d && (d.gd3Humanized || d.gd3Output)) || '';
+  sections += '<h2 style="font-size:14pt;color:#2a7c6f;margin-top:20pt;border-bottom:1pt solid #2a7c6f;padding-bottom:4pt;">💬 Discussion — Response to Classmate 2</h2>';
+  if (gd3Final) { hasContent = true; sections += '<p>' + gd3Final.split('\n').join('</p><p>') + '</p>'; }
+  else { sections += '<p style="color:#aaa;font-style:italic;">(No content for this week)</p>'; }
+
+  // Research Paper
+  const resFinal = (d && (d.researchHumanized || d.researchOutput)) || '';
+  sections += '<h2 style="font-size:14pt;color:#8b1a1a;margin-top:20pt;border-bottom:1pt solid #8b1a1a;padding-bottom:4pt;">📄 Research Paper</h2>';
+  if (resFinal) { hasContent = true; sections += '<p>' + resFinal.split('\n').join('</p><p>') + '</p>'; }
+  else { sections += '<p style="color:#aaa;font-style:italic;">(No content for this week)</p>'; }
+
+  const today = new Date().toLocaleDateString('en-GB');
+  const htmlDoc = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>${subjectLabel} — ${weekLabel}</title>
+  <style>body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.5;margin:2.5cm;color:#000;}h1{font-size:18pt;text-align:center;}h2{font-size:14pt;}p{margin-bottom:8pt;text-align:justify;}</style>
+  </head><body>
+  <h1>${subjectLabel}</h1>
+  <p style="text-align:center;color:#888;font-size:11pt;">${weekLabel} · M.Div COTS IPC Kerala · ${today}</p>
+  <hr style="border:1pt solid #ddd;margin:20pt 0;">
+  ${sections}
+  </body></html>`;
+
+  const blob = new Blob([htmlDoc], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = subjectLabel + ' - ' + weekLabel + '.doc';
+  a.click();
+  showToast('📄 ' + weekLabel + ' exported to Word');
+}
+
+// ============================================================
+// EXPORT ALL WEEKS — FULL SUBJECT COMPILED WORD DOC
+// ============================================================
+function exportAllWeeksWord() {
+  const s = state.subjects[state.currentSubject];
+  if (!s) { alert('No subject selected.'); return; }
+
+  const subjectLabel = (s.number ? 'Subject ' + s.number + ' — ' : '') + s.name;
+  let sections = [];
+
+  for (let w = 1; w <= s.weeks; w++) {
+    const wKey = 'w' + w;
+    const d = s.data[wKey];
+    if (!d) continue;
+
+    let weekHasContent = false;
+    let weekContent = '<h1 style="page-break-before:always;font-size:16pt;color:#1a1a2e;border-bottom:2pt solid #2a7c6f;padding-bottom:6pt;margin-top:0;">Week ' + w + '</h1>';
+
+    // Video Reflection
+    const videoFinal = d.videoHumanized || d.videoOutput || '';
+    if (videoFinal) {
+      weekHasContent = true;
+      weekContent += '<h2 style="font-size:13pt;color:#2a7c6f;margin-top:18pt;">🎬 Video Reflection</h2>';
+      if (d.videoQuestion) weekContent += '<p style="font-style:italic;color:#888070;font-size:11pt;margin-bottom:8pt;"><strong>Question:</strong> ' + escHtml(d.videoQuestion) + '</p>';
+      weekContent += '<div style="margin-bottom:16pt;">' + videoFinal.split('\n').join('<br>') + '</div>';
+    }
+
+    // Discussion — Direct Answer
+    const gd1Final = d.gd1Humanized || d.gd1Output || '';
+    if (gd1Final) {
+      weekHasContent = true;
+      weekContent += '<h2 style="font-size:13pt;color:#2a7c6f;margin-top:18pt;">💬 Discussion — Direct Answer</h2>';
+      if (d.gdQuestion) weekContent += '<p style="font-style:italic;color:#888070;font-size:11pt;margin-bottom:8pt;"><strong>Question:</strong> ' + escHtml(d.gdQuestion) + '</p>';
+      weekContent += '<div style="margin-bottom:16pt;">' + gd1Final.split('\n').join('<br>') + '</div>';
+    }
+
+    // Discussion — Peer 1
+    const gd2Final = d.gd2Humanized || d.gd2Output || '';
+    if (gd2Final) {
+      weekHasContent = true;
+      weekContent += '<h2 style="font-size:13pt;color:#2a7c6f;margin-top:18pt;">💬 Discussion — Response to Classmate 1</h2>';
+      weekContent += '<div style="margin-bottom:16pt;">' + gd2Final.split('\n').join('<br>') + '</div>';
+    }
+
+    // Discussion — Peer 2
+    const gd3Final = d.gd3Humanized || d.gd3Output || '';
+    if (gd3Final) {
+      weekHasContent = true;
+      weekContent += '<h2 style="font-size:13pt;color:#2a7c6f;margin-top:18pt;">💬 Discussion — Response to Classmate 2</h2>';
+      weekContent += '<div style="margin-bottom:16pt;">' + gd3Final.split('\n').join('<br>') + '</div>';
+    }
+
+    // Research Paper
+    const resFinal = d.researchHumanized || d.researchOutput || '';
+    if (resFinal) {
+      weekHasContent = true;
+      weekContent += '<h2 style="font-size:13pt;color:#8b1a1a;margin-top:18pt;">📄 Research Paper</h2>';
+      if (d.researchQuestion) weekContent += '<p style="font-style:italic;color:#888070;font-size:11pt;margin-bottom:8pt;"><strong>Question:</strong> ' + escHtml(d.researchQuestion) + '</p>';
+      weekContent += '<div style="margin-bottom:16pt;">' + resFinal.split('\n').join('<br>') + '</div>';
+    }
+
+    if (weekHasContent) sections.push(weekContent);
+  }
+
+  if (!sections.length) {
+    alert('No humanized or generated assignments found yet. Generate and save assignments first.');
+    return;
+  }
+
+  const today = new Date().toLocaleDateString('en-GB');
+  const htmlDoc = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>${subjectLabel}</title>
+  <style>
+    body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.5; margin: 2.5cm; color: #000; }
+    h1 { font-size: 16pt; font-weight: bold; margin-bottom: 12pt; }
+    h2 { font-size: 13pt; font-weight: bold; margin-top: 16pt; margin-bottom: 8pt; }
+    p { margin-bottom: 8pt; text-align: justify; }
+    .cover { text-align: center; padding-top: 100pt; margin-bottom: 60pt; }
+    .cover h1 { font-size: 20pt; color: #1a1a2e; border: none; page-break-before: avoid; }
+    .cover p { font-size: 12pt; color: #888070; }
+  </style>
+  </head><body>
+  <div class="cover">
+    <h1>${subjectLabel}</h1>
+    <p>M.Div — COTS IPC Kerala</p>
+    <p>Assignment Compilation — All Weeks</p>
+    <p>Exported: ${today}</p>
+  </div>
+  ${sections.join('\n')}
+  </body></html>`;
+
+  const blob = new Blob([htmlDoc], { type: 'application/msword' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = subjectLabel.replace(/[^a-zA-Z0-9 _-]/g,'') + '_All_Weeks.doc';
+  a.click();
+}
+
+function escHtml(str) {
+  return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+
+// ============================================================
+// ONEDRIVE INTEGRATION — Microsoft Graph API
+// ============================================================
+
+let _graphToken = null;
+let _graphTokenExpiry = 0;
+
+async function getGraphToken() {
+  // Return cached token if still valid (with 2 min buffer)
+  if (_graphToken && Date.now() < _graphTokenExpiry - 120000) {
+    return _graphToken;
+  }
+  
+  const c = state.config;
+  if (!c.graphClientId || !c.graphSecret || !c.graphTenant) {
+    throw new Error('OneDrive not configured. Please fill in Client ID, Client Secret, and Tenant ID in Settings.');
+  }
+
+  // Use client credentials flow (app-only auth)
+  const isLocal = window.location.protocol === 'file:';
+
+  if (isLocal) {
+    // Local file — use proxy
+    try {
+      const resp = await fetch('http://localhost:9847/health', {signal: AbortSignal.timeout(2000)});
+      if (!resp.ok) throw new Error('Proxy not responding');
+      _graphToken = 'proxy';
+      _graphTokenExpiry = Date.now() + 3600000;
+      return _graphToken;
+    } catch(e) {
+      throw new Error('Local proxy not running. Please start LAUNCH DASHBOARD.bat first.');
+    }
+  }
+
+  // Hosted (OneDrive/SharePoint) — call Microsoft directly
+  const graphCfg = state.config;
+  if (!graphCfg.graphTenant || !graphCfg.graphClientId || !graphCfg.graphSecret) {
+    throw new Error('OneDrive not configured. Please fill in Settings.');
+  }
+  const tokenUrl = `https://login.microsoftonline.com/${graphCfg.graphTenant}/oauth2/v2.0/token`;
+  const body = new URLSearchParams({
+    grant_type: 'client_credentials',
+    client_id: graphCfg.graphClientId,
+    client_secret: graphCfg.graphSecret,
+    scope: 'https://graph.microsoft.com/.default'
+  });
+  const response = await fetch(tokenUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body.toString()
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error('OneDrive auth failed: ' + (err.error_description || err.error || response.status));
+  }
+  const data = await response.json();
+  _graphToken = data.access_token;
+  _graphTokenExpiry = Date.now() + (data.expires_in * 1000);
+  return _graphToken;
+}
+
+async function getGraphHeaders() {
+  const token = await getGraphToken();
+  const isLocal = window.location.protocol === 'file:';
+  if (isLocal) {
+    return { 'Content-Type': 'application/json' }; // Proxy handles auth
+  }
+  return {
+    'Authorization': 'Bearer ' + token,
+    'Content-Type': 'application/json'
+  };
+}
+
+function getUserDriveBase() {
+  const email = state.config.graphEmail;
+  if (!email) throw new Error('OneDrive user email not set in Settings.');
+  const isLocal = window.location.protocol === 'file:';
+  const base = isLocal ? 'http://localhost:9847/graph' : 'https://graph.microsoft.com/v1.0';
+  return `${base}/users/${encodeURIComponent(email)}/drive`;
+}
+
+async function ensureOneDriveFolder(folderPath) {
+  // Create folder hierarchy if it doesn't exist
+  const headers = await getGraphHeaders();
+  const driveBase = getUserDriveBase();
+  const parts = folderPath.split('/').filter(p => p.trim());
+  
+  let currentPath = '';
+  for (const part of parts) {
+    const parentPath = currentPath || 'root';
+    const checkUrl = currentPath 
+      ? `${driveBase}/root:/${encodeURIComponent(currentPath)}:/children`
+      : `${driveBase}/root/children`;
+    
+    currentPath = currentPath ? currentPath + '/' + part : part;
+    
+    // Try to create folder (will succeed even if exists with conflict=rename workaround)
+    const createUrl = currentPath.includes('/')
+      ? `${driveBase}/root:/${encodeURIComponent(currentPath.substring(0, currentPath.lastIndexOf('/')))  }:/children`
+      : `${driveBase}/root/children`;
+      
+    await fetch(createUrl, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        name: part,
+        folder: {},
+        '@microsoft.graph.conflictBehavior': 'fail'
+      })
+    });
+    // Ignore errors (folder may already exist)
+  }
+}
+
+
+
+async function testOneDrive() {
+  const statusEl = document.getElementById('graph-save-status');
+  statusEl.textContent = '🔄 Testing connection...';
+  statusEl.style.color = 'var(--muted)';
+
+  const isLocal = window.location.protocol === 'file:';
+
+  if (isLocal) {
+    await syncConfigToProxy();
+    try {
+      const resp = await fetch('http://localhost:9847/test', { method: 'POST', body: '{}' });
+      const data = await resp.json();
+      if (resp.ok && data.status === 'ok') {
+        statusEl.textContent = '✅ Connected! Drive: ' + (data.drive || 'OneDrive');
+        statusEl.style.color = 'var(--teal)';
+      } else {
+        statusEl.textContent = '❌ ' + (data.error || 'Connection failed');
+        statusEl.style.color = 'var(--red)';
+      }
+    } catch(e) {
+      statusEl.textContent = '❌ Proxy not running. Start LAUNCH DASHBOARD.bat first.';
+      statusEl.style.color = 'var(--red)';
+    }
+    return;
+  }
+
+  // Hosted mode — test directly
+  try {
+    const token = await getGraphToken();
+    const email = state.config.graphEmail;
+    const url = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(email)}/drive/root`;
+    const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+    if (resp.ok) {
+      const data = await resp.json();
+      statusEl.textContent = '✅ Connected! Drive: ' + (data.name || 'OneDrive');
+      statusEl.style.color = 'var(--teal)';
+    } else {
+      const err = await resp.json();
+      statusEl.textContent = '❌ ' + (err.error?.message || 'Connection failed');
+      statusEl.style.color = 'var(--red)';
+    }
+  } catch(e) {
+    statusEl.textContent = '❌ ' + e.message;
+    statusEl.style.color = 'var(--red)';
+  }
+}
+
+// Sync dashboard config to proxy (local file mode only)
+async function syncConfigToProxy() {
+  if (window.location.protocol !== 'file:') return; // Not needed when hosted
+  const cfg = state.config;
+  if (!cfg.graphClientId) return;
+  try {
+    await fetch('http://localhost:9847/config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        graphClientId: cfg.graphClientId,
+        graphSecret: cfg.graphSecret,
+        graphTenant: cfg.graphTenant,
+        graphEmail: cfg.graphEmail,
+        onedrivePath: cfg.onedrivePath
+      })
+    });
+  } catch(e) {
+    console.warn('Proxy not running — OneDrive sync disabled');
+  }
+}
+
+
+
+function buildWordHtml(content, title) {
+  return `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>${title}</title>
+  <style>body{font-family:'Times New Roman',serif;font-size:12pt;line-height:1.5;margin:2.5cm;color:#000;}h1{font-size:14pt;font-weight:bold;}h2{font-size:13pt;}p{margin-bottom:8pt;text-align:justify;}</style>
+  </head><body><h1>${title}</h1>
+  <p>${content.split('\n').join('</p><p>')}</p>
+  </body></html>`;
+}
+
+
+
+// ============================================================
+// ONEDRIVE — FULL PERSISTENCE LAYER
+// ============================================================
+
+function getSubjectFolderPath(weekNum, section) {
+  const s = state.subjects[state.currentSubject];
+  if (!s) return null;
+  const subjectFolder = (s.number ? s.number + ' - ' : '') + s.name;
+  const base = (state.config.onedrivePath || "Paul's Moodle Assignment Dashboard").replace(/\/$/, '');
+  return base + '/SUBJECT/' + subjectFolder + '/Week ' + weekNum + '/' + section;
+}
+
+async function saveTextToOneDrive(fileName, textContent, folderPath) {
+  const c = state.config;
+  if (!c.graphClientId || !c.graphSecret || !c.graphTenant || !c.graphEmail) return false;
+  try {
+    const headers = await getGraphHeaders();
+    const driveBase = getUserDriveBase();
+    // Ensure folders exist
+    await ensureOneDriveFolder(folderPath);
+    const uploadUrl = driveBase + '/root:/' + encodeURIComponent(folderPath + '/' + fileName).replace(/%2F/g, '/') + ':/content';
+    const authHeader = headers['Authorization'] ? { 'Authorization': headers['Authorization'] } : {};
+    const resp = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { ...authHeader, 'Content-Type': 'text/plain; charset=utf-8' },
+      body: textContent
+    });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.webUrl || true;
+    }
+    const err = await resp.json().catch(() => ({}));
+    console.error('saveTextToOneDrive failed:', err);
+    return false;
+  } catch(e) {
+    console.error('saveTextToOneDrive error:', e.message);
+    return false;
+  }
+}
+
+async function saveBinaryToOneDrive(fileName, arrayBuffer, folderPath, mimeType) {
+  const c = state.config;
+  if (!c.graphClientId || !c.graphSecret || !c.graphTenant || !c.graphEmail) return false;
+  try {
+    const headers = await getGraphHeaders();
+    const driveBase = getUserDriveBase();
+    await ensureOneDriveFolder(folderPath);
+    const uploadUrl = driveBase + '/root:/' + encodeURIComponent(folderPath + '/' + fileName).replace(/%2F/g, '/') + ':/content';
+    const authHeader2 = headers['Authorization'] ? { 'Authorization': headers['Authorization'] } : {};
+    const resp = await fetch(uploadUrl, {
+      method: 'PUT',
+      headers: { ...authHeader2, 'Content-Type': mimeType || 'application/octet-stream' },
+      body: arrayBuffer
+    });
+    if (resp.ok) { const d = await resp.json(); return d.webUrl || true; }
+    return false;
+  } catch(e) {
+    console.error('saveBinaryToOneDrive error:', e.message);
+    return false;
+  }
+}
+
+async function readTextFromOneDrive(filePath) {
+  const c = state.config;
+  if (!c.graphClientId || !c.graphSecret || !c.graphTenant || !c.graphEmail) return null;
+  try {
+    const headers = await getGraphHeaders();
+    const driveBase = getUserDriveBase();
+    const url = driveBase + '/root:/' + encodeURIComponent(filePath).replace(/%2F/g, '/') + ':/content';
+    const readHeaders = {};
+    if (_graphToken && _graphToken !== 'proxy') readHeaders['Authorization'] = 'Bearer ' + _graphToken;
+    const resp = await fetch(url, { headers: readHeaders });
+    if (resp.ok) return await resp.text();
+    return null;
+  } catch(e) { return null; }
+}
+
+async function listOneDriveFolder(folderPath) {
+  const c = state.config;
+  if (!c.graphClientId || !c.graphSecret || !c.graphTenant || !c.graphEmail) return [];
+  try {
+    const headers = await getGraphHeaders();
+    const driveBase = getUserDriveBase();
+    const url = driveBase + '/root:/' + encodeURIComponent(folderPath).replace(/%2F/g, '/') + ':/children?$top=200';
+    const listHeaders = {};
+    if (_graphToken && _graphToken !== 'proxy') listHeaders['Authorization'] = 'Bearer ' + _graphToken;
+    const resp = await fetch(url, { headers: listHeaders });
+    if (resp.ok) {
+      const data = await resp.json();
+      return data.value || [];
+    }
+    return [];
+  } catch(e) { return []; }
+}
+
+// Save any generated output as text file to OneDrive
+async function saveOutputToOneDrive(outputId, section) {
+  const el = document.getElementById(outputId + '-output');
+  if (!el || !el.textContent || el.classList.contains('empty')) return false;
+  const folderPath = getSubjectFolderPath(state.currentWeek, section);
+  if (!folderPath) return false;
+  const s = state.subjects[state.currentSubject];
+  const fileName = s.name + ' - Week ' + state.currentWeek + ' - ' + section + '.txt';
+  const result = await saveTextToOneDrive(fileName, el.textContent, folderPath);
+  if (result) showToast('✅ Saved to OneDrive: ' + section);
+  return result;
+}
+
+// Save humanized version as text file to OneDrive
+async function saveHumanizedToOneDrive(id, text, section) {
+  const folderPath = getSubjectFolderPath(state.currentWeek, section);
+  if (!folderPath) return false;
+  const s = state.subjects[state.currentSubject];
+  const fileName = s.name + ' - Week ' + state.currentWeek + ' - ' + section + ' (Humanized Final).txt';
+  return await saveTextToOneDrive(fileName, text, folderPath);
+}
+
+// Save transcript/notes as text to OneDrive  
+async function saveTranscriptToOneDrive(slotNum, title, text) {
+  const folderPath = getSubjectFolderPath(state.currentWeek, 'Video Reflection/Transcripts');
+  if (!folderPath) return false;
+  const label = title || ('Video ' + slotNum);
+  const fileName = 'Transcript - ' + label + '.txt';
+  return await saveTextToOneDrive(fileName, text, folderPath);
+}
+
+// Upload PDF to OneDrive and also save extracted text for search
+async function uploadPDFToOneDrive(file, textContent) {
+  const s = state.subjects[state.currentSubject];
+  if (!s) return false;
+  const folderPath = getSubjectFolderPath(state.currentWeek, 'Reading PDFs');
+  
+  // Upload original PDF as binary
+  const pdfResult = await new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      const result = await saveBinaryToOneDrive(file.name, e.target.result, folderPath, 'application/pdf');
+      resolve(result);
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  // Also save extracted text version for search
+  if (textContent) {
+    const txtName = file.name.replace(/\.pdf$/i, '') + '_text.txt';
+    await saveTextToOneDrive(txtName, textContent, folderPath);
+  }
+
+  return pdfResult;
+}
+
+// ─── SEARCH: reads all text files from OneDrive across all subjects ───
+async function searchOneDrive(query) {
+  const c = state.config;
+  if (!c.graphClientId || !c.graphSecret || !c.graphTenant || !c.graphEmail) return [];
+  
+  const results = [];
+  const basePath = (c.onedrivePath || "Paul's Moodle Assignment Dashboard") + '/SUBJECT';
+  
+  // Get all subjects
+  const subjects = await listOneDriveFolder(basePath);
+  
+  for (const subj of subjects) {
+    if (subj.folder === undefined) continue; // skip files
+    // Get all weeks
+    const weeks = await listOneDriveFolder(basePath + '/' + subj.name);
+    for (const week of weeks) {
+      if (week.folder === undefined) continue;
+      // Get all section folders
+      const sections = await listOneDriveFolder(basePath + '/' + subj.name + '/' + week.name);
+      for (const section of sections) {
+        if (section.folder === undefined) continue;
+        // Get all text files
+        const files = await listOneDriveFolder(basePath + '/' + subj.name + '/' + week.name + '/' + section.name);
+        for (const file of files) {
+          if (!file.name.endsWith('.txt')) continue;
+          // Read file content
+          const filePath = basePath + '/' + subj.name + '/' + week.name + '/' + section.name + '/' + file.name;
+          const text = await readTextFromOneDrive(filePath);
+          if (text && text.toLowerCase().includes(query.toLowerCase())) {
+            const idx = text.toLowerCase().indexOf(query.toLowerCase());
+            const excerpt = text.substring(Math.max(0, idx - 100), idx + 200);
+            results.push({
+              subject: subj.name,
+              week: week.name,
+              section: section.name,
+              fileName: file.name,
+              filePath,
+              excerpt,
+              webUrl: file.webUrl || null
+            });
+          }
+        }
+      }
+    }
+  }
+  return results;
+}
+
+function showToast(msg) {
+  let toast = document.getElementById('toast-msg');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast-msg';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:#1a1a2e;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.3);transition:opacity 0.3s;';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.opacity = '1';
+  clearTimeout(toast._timeout);
+  toast._timeout = setTimeout(() => { toast.style.opacity = '0'; }, 3000);
+}
+
+// ============================================================
+// HUMANIZER — generates in Paul's voice directly
+// ============================================================
+async function humanizeText(rawText, assignmentType) {
+  const key = state.config.anthropicKey;
+  if (!key) { alert('Please set your Anthropic API key in Settings first.'); return null; }
+
+  const humanizePrompt = `You are rewriting a seminary assignment to sound like it was written by a real pastor — not AI. 
+
+WRITER PROFILE:
+- Paul, expository pastor, 4+ years ministry in Nepal
+- Hindu/Buddhist majority context
+- Uses 3 E's: Expository (text first), Exhort, Examples
+- Voice: candid, direct, reflective — "I have to be honest", "to be honest"
+- Heavy use of dashes for flowing thought — like this
+- Ampersands (&) in casual phrasing
+- Slightly imperfect grammar — natural, not polished
+- Mid-sentence scholar references without formal signposting
+- Warm but non-stiff closings
+- Nepal ministry examples woven naturally mid-thought
+- NOT overly formal — scholarly but genuinely human
+
+HUMANIZING RULES:
+- Vary sentence length dramatically — mix very short punchy sentences with longer flowing ones
+- Start some sentences with "And", "But", "So" — real people do this
+- Add one genuine personal admission or observation from Nepal ministry
+- Remove any phrase that sounds like AI: "furthermore", "moreover", "it is noteworthy", "in conclusion"
+- Replace smooth transitions with natural ones: "and honestly", "which gets me to", "the thing is"
+- Break up any overly balanced parallel structure
+- Keep all scholarly citations and bibliography exactly as they are — do not change those
+- Keep word count within the required range for ${assignmentType}
+- Target: sounds like a real pastor wrote this after thinking it through
+
+ASSIGNMENT TYPE: ${assignmentType}
+
+TEXT TO HUMANIZE:
+${rawText}
+
+Return ONLY the humanized text — no preamble, no explanation. Keep bibliography exactly as-is at the end.`;
+
+  return await callClaude(key, humanizePrompt, 2000);
+}
+
+// Generate then immediately humanize
+async function generateAndHumanize(type) {
+  // First generate
+  if (type === 'video') await generateVideoReflection(true);
+  else if (type === 'gd1') await generateGD(1, true);
+  else if (type === 'gd2') await generateGD(2, true);
+  else if (type === 'gd3') await generateGD(3, true);
+  else if (type === 'research') await generateResearch(true);
+}
+</script>
+</body>
+</html>
