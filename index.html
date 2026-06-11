@@ -906,12 +906,24 @@
         </div>
 
         <div class="config-section">
-          <div class="config-title">🗑️ Data Management</div>
+          <div class="config-title">💾 Backup & Restore</div>
+          <div class="alert alert-info" style="margin-bottom:16px;">
+            <strong>How to keep your data safe:</strong><br>
+            1. Click <strong>Export Full Backup</strong> after each session<br>
+            2. Save the .json file to your OneDrive folder<br>
+            3. On a new device, click <strong>Import Backup</strong> to restore everything<br>
+            <br>
+            Backup includes: all assignments, PDF summaries, transcripts, humanized versions, settings.
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;">
+            <button class="btn btn-primary" onclick="exportAllData()">📤 Export Full Backup (.json)</button>
+            <button class="btn btn-secondary" onclick="importData()">📥 Import Backup</button>
+          </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
-            <button class="btn btn-secondary btn-sm" onclick="exportAllData()">📤 Export All Data</button>
-            <button class="btn btn-secondary btn-sm" onclick="importData()">📥 Import Data</button>
+            <button class="btn btn-secondary btn-sm" onclick="exportAllWeeksWord()">📄 Export All Weeks (Word)</button>
             <button class="btn btn-danger btn-sm" onclick="clearAllData()">🗑️ Clear All Data</button>
           </div>
+          <div id="backup-status" style="font-size:12px;color:var(--teal);margin-top:8px;"></div>
         </div>
       </div>
     </div>
@@ -1871,6 +1883,11 @@ function updateOutputDisplay(id, text) {
 function showOutputActions(id) {
   const el = document.getElementById(id + '-actions');
   if (el) el.style.display = 'flex';
+  // Remind to backup after generation
+  const backupEl = document.getElementById('backup-status');
+  if (backupEl) {
+    backupEl.textContent = '⚠️ Remember to Export Full Backup after this session to save to OneDrive';
+  }
 }
 
 function copyOutput(id) {
@@ -2034,67 +2051,80 @@ function copyLogItem() {
 // SEARCH
 // ============================================================
 async function performSearch() {
-  const query = document.getElementById('search-input').value.trim();
+  const query = document.getElementById('search-input').value.trim().toLowerCase();
   const el = document.getElementById('search-results');
   if (!query || query.length < 2) { el.innerHTML = ''; return; }
 
-  el.innerHTML = '<div class="alert alert-info">🔍 Searching OneDrive across all subjects...</div>';
+  el.innerHTML = '<div class="alert alert-info">🔍 Searching all notes, summaries & assignments...</div>';
 
-  // Always search OneDrive first if configured
-  let results = [];
-  if (state.config.graphClientId && state.config.graphTenant && state.config.graphEmail) {
-    try {
-      results = await searchOneDrive(query);
-    } catch(e) {
-      console.error('OneDrive search error:', e.message);
-    }
-  }
+  const results = [];
+  const safeQ = query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
 
-  // Also search local log as fallback / supplement
+  // Search all subject data
+  state.subjects.forEach((subject, si) => {
+    Object.keys(subject.data || {}).forEach(weekKey => {
+      const d = subject.data[weekKey];
+      const weekNum = weekKey.replace('w', '');
+      const searchFields = [
+        { type: 'Video Reflection', content: d.videoOutput || d.videoHumanized || '' },
+        { type: 'Video Question', content: d.videoQuestion || '' },
+        { type: 'Discussion Direct Answer', content: d.gd1Output || d.gd1Humanized || '' },
+        { type: 'Discussion Question', content: d.gdQuestion || '' },
+        { type: 'Peer Response 1', content: d.gd2Output || d.gd2Humanized || '' },
+        { type: 'Peer Response 2', content: d.gd3Output || d.gd3Humanized || '' },
+        { type: 'Research Paper', content: d.researchOutput || d.researchHumanized || '' },
+        { type: 'Research Outline', content: d.outlineOutput || '' },
+      ];
+      Object.keys(d).forEach(key => {
+        if (key.startsWith('pdfSummary_')) {
+          searchFields.push({ type: '📋 PDF Summary: ' + key.replace('pdfSummary_',''), content: d[key] || '' });
+        }
+        if (key.startsWith('transcript') && !key.includes('Title') && typeof d[key] === 'string') {
+          searchFields.push({ type: '📹 Video Transcript', content: d[key] || '' });
+        }
+      });
+      searchFields.forEach(field => {
+        if (!field.content || field.content.length < 10) return;
+        if (field.content.toLowerCase().includes(query)) {
+          const idx2 = field.content.toLowerCase().indexOf(query);
+          const excerpt = field.content.substring(Math.max(0, idx2 - 120), idx2 + 250);
+          results.push({ subject: (subject.number ? '#' + subject.number + ' ' : '') + subject.name, week: 'Week ' + weekNum, type: field.type, excerpt, content: field.content, subjectIdx: si, weekNum: parseInt(weekNum) });
+        }
+      });
+    });
+  });
+
+  // Search log
   state.log.forEach(item => {
-    const searchIn = (item.content || '') + ' ' + (item.subject || '') + ' ' + (item.typeLabel || '');
-    if (searchIn.toLowerCase().includes(query.toLowerCase())) {
-      const idx2 = searchIn.toLowerCase().indexOf(query.toLowerCase());
-      const excerpt = searchIn.substring(Math.max(0, idx2 - 100), idx2 + 200);
-      // Avoid duplicates
-      if (!results.find(r => r.fileName && r.fileName.includes(item.typeLabel) && r.week === item.week)) {
-        results.push({
-          subject: item.subject,
-          week: item.week,
-          section: item.typeLabel,
-          fileName: item.typeLabel + ' (local log)',
-          filePath: null,
-          excerpt,
-          webUrl: null,
-          isLocal: true,
-          logItem: item
-        });
+    const searchIn = (item.content || '') + ' ' + (item.subject || '');
+    if (searchIn.toLowerCase().includes(query)) {
+      const idx2 = searchIn.toLowerCase().indexOf(query);
+      const excerpt = searchIn.substring(Math.max(0, idx2 - 120), idx2 + 250);
+      if (!results.find(r => r.content === item.content)) {
+        results.push({ subject: item.subject, week: item.week, type: '📋 ' + item.typeLabel, excerpt, content: item.content, logItem: item });
       }
     }
   });
 
   if (!results.length) {
-    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><h3>No results found</h3><p>Try a different search term. Results appear from OneDrive and local log.</p></div>';
+    el.innerHTML = '<div class="empty-state"><div class="empty-icon">🔍</div><h3>No results for "' + query + '"</h3><p>Search covers all assignments, PDF summaries, transcripts & discussion entries.</p></div>';
     return;
   }
 
-  el.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-bottom:12px;">' + results.length + ' result(s) found</p>';
+  const subjectCount = [...new Set(results.map(r => r.subject))].length;
+  el.innerHTML = '<p style="font-size:12px;color:var(--muted);margin-bottom:16px;">Found <strong>' + results.length + '</strong> result(s) matching "<strong>' + query + '</strong>" across ' + subjectCount + ' subject(s)</p>';
 
   results.forEach(r => {
     const div = document.createElement('div');
     div.className = 'search-result';
-    const ql = query.toLowerCase();
-    const safeQ = query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&'); const highlighted = r.excerpt.replace(new RegExp(safeQ, 'gi'), m => '<mark>' + m + '</mark>');
-    div.innerHTML = `
-      <div class="result-meta">
-        📁 ${r.subject || ''} · ${r.week || ''} · ${r.section || ''}
-        ${r.webUrl ? '<a href="' + r.webUrl + '" target="_blank" style="color:var(--teal);text-decoration:none;margin-left:8px;">☁️ Open in OneDrive</a>' : ''}
-        ${r.isLocal ? '<span style="color:var(--muted);margin-left:8px;">(local)</span>' : ''}
-      </div>
-      <div class="result-title">📄 ${r.fileName || ''}</div>
-      <div class="result-excerpt">...${highlighted}...</div>`;
-    if (r.logItem) div.onclick = () => viewLogItem(r.logItem);
-    else if (r.webUrl) div.onclick = () => window.open(r.webUrl, '_blank');
+    const highlighted = r.excerpt.replace(new RegExp(safeQ, 'gi'), m => '<mark>' + m + '</mark>');
+    div.innerHTML = '<div class="result-meta">📁 ' + r.subject + ' · ' + r.week + '</div><div class="result-title">' + r.type + '</div><div class="result-excerpt">...' + highlighted + '...</div>';
+    div.onclick = () => {
+      document.getElementById('log-view-title').textContent = r.subject + ' — ' + r.week;
+      document.getElementById('log-view-meta').textContent = r.type;
+      document.getElementById('log-view-content').textContent = r.content;
+      openModal('modal-log-view');
+    };
     el.appendChild(div);
   });
 }
@@ -2171,8 +2201,71 @@ function loadConfigUI() {
 // DATA MANAGEMENT
 // ============================================================
 function exportAllData() {
-  const dataStr = JSON.stringify(state, null, 2);
-  downloadText(dataStr, 'PaulsDashboard_Backup_' + new Date().toISOString().split('T')[0] + '.txt');
+  // Build complete backup including all summaries and generated content
+  const backup = {
+    version: '2.0',
+    exportDate: new Date().toISOString(),
+    exportedBy: state.config.name || 'Paul',
+    state: state,
+    // Include any PDF summaries stored in week data
+    searchIndex: buildSearchIndex()
+  };
+  const dataStr = JSON.stringify(backup, null, 2);
+  const dateStr = new Date().toISOString().split('T')[0];
+  const subjectName = state.subjects[state.currentSubject]?.name || 'All';
+  downloadText(dataStr, 'PaulsDashboard_' + subjectName + '_Backup_' + dateStr + '.json');
+  showToast('✅ Full backup exported — save to OneDrive!');
+}
+
+function buildSearchIndex() {
+  // Build a flat searchable index of all content
+  const index = [];
+  state.subjects.forEach((subject, si) => {
+    Object.keys(subject.data || {}).forEach(weekKey => {
+      const d = subject.data[weekKey];
+      const weekNum = weekKey.replace('w','');
+
+      const entries = [
+        { type: 'Video Reflection', content: d.videoOutput || '' },
+        { type: 'Video Humanized', content: d.videoHumanized || '' },
+        { type: 'Video Question', content: d.videoQuestion || '' },
+        { type: 'Discussion Direct Answer', content: d.gd1Output || '' },
+        { type: 'Discussion Answer Humanized', content: d.gd1Humanized || '' },
+        { type: 'Discussion Question', content: d.gdQuestion || '' },
+        { type: 'Peer Response 1', content: d.gd2Output || '' },
+        { type: 'Peer Response 1 Humanized', content: d.gd2Humanized || '' },
+        { type: 'Peer Response 2', content: d.gd3Output || '' },
+        { type: 'Peer Response 2 Humanized', content: d.gd3Humanized || '' },
+        { type: 'Research Paper', content: d.researchOutput || '' },
+        { type: 'Research Paper Humanized', content: d.researchHumanized || '' },
+        { type: 'Research Outline', content: d.outlineOutput || '' },
+      ];
+
+      // Add PDF summaries
+      Object.keys(d).forEach(key => {
+        if (key.startsWith('pdfSummary_')) {
+          const pdfName = key.replace('pdfSummary_', '');
+          entries.push({ type: 'PDF Summary: ' + pdfName, content: d[key] || '' });
+        }
+        if (key.startsWith('transcript')) {
+          entries.push({ type: 'Video Transcript', content: d[key] || '' });
+        }
+      });
+
+      entries.forEach(entry => {
+        if (entry.content && entry.content.length > 10) {
+          index.push({
+            subject: subject.name,
+            subjectNumber: subject.number || '',
+            week: 'Week ' + weekNum,
+            type: entry.type,
+            content: entry.content
+          });
+        }
+      });
+    });
+  });
+  return index;
 }
 
 function importData() {
@@ -2183,15 +2276,29 @@ function importData() {
     const reader = new FileReader();
     reader.onload = ev => {
       try {
-        const imported = JSON.parse(ev.target.result);
+        const parsed = JSON.parse(ev.target.result);
+        // Handle both old format (direct state) and new format (wrapped backup)
+        const imported = parsed.version === '2.0' ? parsed.state : parsed;
+        // Merge carefully - preserve existing config if importing on new device
+        const existingConfig = state.config;
         state = { ...state, ...imported };
+        // Don't overwrite API keys if already set on this device
+        if (existingConfig.anthropicKey && !imported.config?.anthropicKey) {
+          state.config.anthropicKey = existingConfig.anthropicKey;
+        }
         saveState();
         renderSubjectList();
         renderStats();
         renderLog();
         loadConfigUI();
-        alert('Data imported successfully!');
-      } catch { alert('Invalid file format.'); }
+        showToast('✅ Data imported! ' + (state.subjects?.length || 0) + ' subjects restored.');
+        // If current subject exists, reload it
+        if (state.currentSubject !== null && state.subjects[state.currentSubject]) {
+          selectSubject(state.currentSubject);
+        }
+      } catch(e) { 
+        alert('Import failed: ' + e.message); 
+      }
     };
     reader.readAsText(e.target.files[0]);
   };
