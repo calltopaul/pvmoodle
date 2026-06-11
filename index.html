@@ -1519,54 +1519,58 @@ function handleCuratedBooks(event) {
 // CLAUDE API
 // ============================================================
 async function callClaude(apiKey, prompt, maxTokens = 2000) {
-  // Direct Anthropic API call — works from https:// origins (OneDrive, SharePoint)
-  // Falls back to local proxy if running locally via file://
+  // Always call Anthropic directly — works from https:// (GitHub Pages, SharePoint)
+  // When running locally via file://, try proxy first, fall back to direct call
   const isLocal = window.location.protocol === 'file:';
-  const url = isLocal ? 'http://localhost:9847/claude' : 'https://api.anthropic.com/v1/messages';
+  
+  const callDirect = async () => {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-beta': 'prompt-caching-2024-07-31'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-5',
+        max_tokens: maxTokens,
+        system: buildSystemPrompt(),
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error?.message || 'API error ' + response.status);
+    }
+    const data = await response.json();
+    return data.content.map(b => b.text || '').join('');
+  };
 
+  if (!isLocal) {
+    // GitHub Pages / SharePoint — direct call always works
+    return await callDirect();
+  }
+
+  // Local file — try proxy first (faster, avoids CORS on some setups)
   try {
-    let response;
-    if (isLocal) {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ apiKey, maxTokens, system: buildSystemPrompt(), prompt })
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error || 'API error ' + response.status);
-      }
-      const data = await response.json();
+    const proxyResp = await fetch('http://localhost:9847/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ apiKey, maxTokens, system: buildSystemPrompt(), prompt }),
+      signal: AbortSignal.timeout(3000)
+    });
+    if (proxyResp.ok) {
+      const data = await proxyResp.json();
       return data.text || '';
-    } else {
-      response = await fetch(url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-beta': 'prompt-caching-2024-07-31'
-        },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-5',
-          max_tokens: maxTokens,
-          system: buildSystemPrompt(),
-          messages: [{ role: 'user', content: prompt }]
-        })
-      });
-      if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.error?.message || 'API error ' + response.status);
-      }
-      const data = await response.json();
-      return data.content.map(b => b.text || '').join('');
     }
   } catch(e) {
-    if (e.message.includes('Failed to fetch') && isLocal) {
-      throw new Error('Proxy not running. Start LAUNCH DASHBOARD.bat first.');
-    }
-    throw e;
+    // Proxy not running — fall back to direct call
+    console.log('Proxy unavailable, calling Anthropic directly');
   }
+  
+  // Direct call as fallback when proxy not running
+  return await callDirect();
 }
 
 function buildSystemPrompt() {
